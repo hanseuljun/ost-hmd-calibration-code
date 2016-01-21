@@ -26,9 +26,7 @@ using System.Collections;
 public class MyDepthImage : MonoBehaviour
 {
 	public MyIisuInputProvider IisuInput;
-	
-	private MyImageConvertor _imageConvertor;
-	
+
 	public Texture2D DepthMap;
 	
 	public float NormalizedXCoordinate;
@@ -41,7 +39,6 @@ public class MyDepthImage : MonoBehaviour
 	
 	void Awake()
 	{
-		_imageConvertor = new MyImageConvertor(160, 120);
 		_timer = 0;
 		_heightWidthRatio = 120f/160f;
 	}
@@ -63,7 +60,7 @@ public class MyDepthImage : MonoBehaviour
 			}
 
 			ushort[] values = new ushort[0];
-			_imageConvertor.generateDepthImage(IisuInput.DepthMap, IisuInput.LabelImage, ref values, ref DepthMap);
+			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, 160, 120, ref values);
 
 			Color[] pixels = new Color[values.Length];
 			
