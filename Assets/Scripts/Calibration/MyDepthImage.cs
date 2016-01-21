@@ -61,8 +61,22 @@ public class MyDepthImage : MonoBehaviour
 			{
 				DepthMap = new Texture2D(160, 120, TextureFormat.ARGB32, false);
 			}
+
+			ushort[] values = new ushort[0];
+			_imageConvertor.generateDepthImage(IisuInput.DepthMap, IisuInput.LabelImage, ref values, ref DepthMap);
+
+			Color[] pixels = new Color[values.Length];
 			
-			_imageConvertor.generateDepthImage(IisuInput.DepthMap, IisuInput.LabelImage, ref DepthMap);
+			for(int i = 0; i < values.Length; ++i)
+			{
+				//normalize depth value in millimeter so that 5m <-> color 255
+				ushort depthValue = (ushort)(values[i] * 255 / (5000));
+				if (depthValue > 255) depthValue = 255;
+				pixels[i] = new Color(depthValue / 255f, depthValue / 255f, depthValue / 255f, 1);
+			}
+			
+			DepthMap.SetPixels(pixels);
+			DepthMap.Apply();
 			
 		}
 		else
