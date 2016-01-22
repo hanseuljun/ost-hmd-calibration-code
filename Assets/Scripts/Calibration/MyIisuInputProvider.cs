@@ -16,7 +16,11 @@ public class MyIisuInputProvider : MonoBehaviour
 	private IisuUnityBehaviour _iisuUnity;
 	
 	private IDataHandle<Iisu.Data.IImageData> _colorImage;
+	private IParameterHandle<int> colorWidth;
+	private IParameterHandle<int> colorHeight;
 	private IDataHandle<Iisu.Data.IImageData> _depthImage;
+	private IParameterHandle<int> depthWidth;
+	private IParameterHandle<int> depthHeight;
 	
 	private List<uint> _poseIDsDetected;
 	
@@ -27,9 +31,13 @@ public class MyIisuInputProvider : MonoBehaviour
 		_iisuUnity.Initialize ();
 		
 		_colorImage = _iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.COLOR.Image");
+		colorWidth = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Width");
+		colorHeight = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Height");
 
 		//register iisu data needed to display the depthimage
 		_depthImage = _iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.DEPTH.Image");
+		depthWidth = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Width");
+		depthHeight = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Height");
 		
 		_poseIDsDetected = new List<uint>();
 	}
@@ -59,12 +67,44 @@ public class MyIisuInputProvider : MonoBehaviour
 			return _colorImage.Value; 
 		}
 	}
+
+	public int ColorMapWidth
+	{
+		get
+		{
+			return colorWidth.Value;
+		}
+	}
+	
+	public int ColorMapHeight
+	{
+		get
+		{
+			return colorHeight.Value;
+		}
+	}
 	
 	public Iisu.Data.IImageData DepthMap 
 	{
-		get 
+		get
 		{ 
 			return _depthImage.Value; 
+		}
+	}
+	
+	public int DepthMapWidth
+	{
+		get
+		{
+			return depthWidth.Value;
+		}
+	}
+	
+	public int DepthMapHeight
+	{
+		get
+		{
+			return depthHeight.Value;
 		}
 	}
 	

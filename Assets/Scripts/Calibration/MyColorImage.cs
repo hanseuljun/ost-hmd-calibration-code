@@ -23,11 +23,11 @@
 using UnityEngine;
 using System.Collections;
 
-public class MyDepthImage : MonoBehaviour
+public class MyColorImage : MonoBehaviour
 {
 	public MyIisuInputProvider IisuInput;
-
-	public Texture2D DepthMap;
+	
+	public Texture2D ColorMap;
 	
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
@@ -52,27 +52,17 @@ public class MyDepthImage : MonoBehaviour
 		if(_timer >= 0.0333f)
 		{
 			_timer = 0;
-	
-			if (DepthMap == null)
-			{
-				DepthMap = new Texture2D(IisuInput.DepthMapWidth, IisuInput.DepthMapHeight, TextureFormat.ARGB32, false);
-			}
-
-			ushort[] values = new ushort[0];
-			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, IisuInput.DepthMapWidth, IisuInput.DepthMapHeight, ref values);
-
-			Color[] pixels = new Color[values.Length];
 			
-			for(int i = 0; i < values.Length; ++i)
+			if (ColorMap == null)
 			{
-				//normalize depth value in millimeter so that 5m <-> color 255
-				ushort depthValue = (ushort)(values[i] * 255 / (5000));
-				if (depthValue > 255) depthValue = 255;
-				pixels[i] = new Color(depthValue / 255f, depthValue / 255f, depthValue / 255f, 1);
+				ColorMap = new Texture2D(IisuInput.ColorMapWidth, IisuInput.ColorMapHeight, TextureFormat.ARGB32, false);
 			}
 			
-			DepthMap.SetPixels(pixels);
-			DepthMap.Apply();
+			Color32[] values = new Color32[0];
+			MyImageConvertor.generateColorImage(IisuInput.ColorMap, IisuInput.ColorMapWidth, IisuInput.ColorMapHeight, ref values);
+			
+			ColorMap.SetPixels32(values);
+			ColorMap.Apply();
 			
 		}
 		else
@@ -83,14 +73,14 @@ public class MyDepthImage : MonoBehaviour
 	
 	void OnGUI()
 	{
-		if (DepthMap != null)
+		if (ColorMap != null)
 		{
-			_heightWidthRatio = (float) IisuInput.DepthMapHeight / (float) IisuInput.DepthMapWidth;
-
+			_heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
+			
 			GUI.DrawTexture(new Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
 			                         Screen.height * NormalizedYCoordinate + Screen.width * NormalizedWidth * _heightWidthRatio,
 			                         -Screen.width * NormalizedWidth,
-			                         -Screen.width * NormalizedWidth * _heightWidthRatio), DepthMap);
+			                         -Screen.width * NormalizedWidth * _heightWidthRatio), ColorMap);
 		}
 	}
 }

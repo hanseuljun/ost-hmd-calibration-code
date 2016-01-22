@@ -25,6 +25,52 @@ public class MyImageConvertor
 		v = index / width;
 	}
 	
+	public static bool generateColorImage(IImageData image, int width, int height, ref Color32[] values)
+	{
+		if (image == null)
+			return false;
+		
+		if (image.Raw == IntPtr.Zero)
+			return false;
+		
+		byte[] imageRaw = new byte[image.ImageInfos.BytesRaw];
+		
+		uint byte_size = (uint)image.ImageInfos.BytesRaw;
+		
+		// copy image content into a managed array
+		Marshal.Copy(image.Raw, imageRaw, 0, (int)byte_size);
+		
+		int destinationU, destinationV;
+		int sourceU, sourceV;
+		int sourceIndex;
+		
+		int imageWidth = (int)image.ImageInfos.Width;
+		int imageHeight = (int)image.ImageInfos.Height;
+		
+		values = new Color32[width * height];
+		
+		//build up the user mask
+		for (int destinationIndex = 0; destinationIndex < values.Length; ++destinationIndex)
+		{
+			//get the UV coordinates from the final texture that will be displayed
+			getUV(destinationIndex, width, height, out destinationU, out destinationV);
+			
+			//the resolutions of the depth and label image can differ from the final texture, 
+			//so we have to apply some remapping to get the equivalent UV coordinates in the depth and label image.
+			getUVEquivalent(width, height, destinationU, destinationV, imageWidth, imageHeight, out sourceU, out sourceV, out sourceIndex);
+			
+			// reconstruct ushort value from 2 bytes (low indian)
+			// values[destinationIndex] = (ushort)(imageRaw[sourceIndex * 2] + (imageRaw[sourceIndex * 2 + 1] << 8));
+			values[destinationIndex].r = imageRaw[destinationIndex * 4 + 2];
+			values[destinationIndex].g = imageRaw[destinationIndex * 4 + 1];
+			values[destinationIndex].b = imageRaw[destinationIndex * 4 + 0];
+			values[destinationIndex].a = 255;
+		}
+		
+		return true;
+		
+	}
+	
 	public static bool generateDepthImage(IImageData image, int width, int height, ref ushort[] values)
 	{
 		if (image == null)
@@ -58,7 +104,7 @@ public class MyImageConvertor
 			//the resolutions of the depth and label image can differ from the final texture, 
 			//so we have to apply some remapping to get the equivalent UV coordinates in the depth and label image.
 			getUVEquivalent(width, height, destinationU, destinationV, imageWidth, imageHeight, out sourceU, out sourceV, out sourceIndex);
-			
+
 			// reconstruct ushort value from 2 bytes (low indian)
 			values[destinationIndex] = (ushort)(imageRaw[sourceIndex * 2] + (imageRaw[sourceIndex * 2 + 1] << 8));
 		}
