@@ -22,6 +22,7 @@
 
 using UnityEngine;
 using System.Collections;
+using OpenCvSharp;
 
 public class MyDepthImage : MonoBehaviour
 {
@@ -52,25 +53,38 @@ public class MyDepthImage : MonoBehaviour
 		if(_timer >= 0.0333f)
 		{
 			_timer = 0;
+
+			int width = IisuInput.DepthMapWidth;
+			int height = IisuInput.DepthMapHeight;
 	
 			if (DepthMap == null)
 			{
-				DepthMap = new Texture2D(IisuInput.DepthMapWidth, IisuInput.DepthMapHeight, TextureFormat.ARGB32, false);
+				DepthMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
 			}
 
-			ushort[] values = new ushort[0];
-			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, IisuInput.DepthMapWidth, IisuInput.DepthMapHeight, ref values);
+			Mat mat = new Mat(height, width, MatType.CV_16U);
+			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref mat);
 
-			Color[] pixels = new Color[values.Length];
-			
-			for(int i = 0; i < values.Length; ++i)
+			Color[] pixels = new Color[width * height];
+
+			MatOfUShort matUS = new MatOfUShort (mat);
+			var indexer = matUS.GetIndexer ();
+
+			float multiplier = 1.0f / 5000.0f;
+
+			for(int i = 0; i < mat.Width; ++i)
 			{
-				//normalize depth value in millimeter so that 5m <-> color 255
-				ushort depthValue = (ushort)(values[i] * 255 / (5000));
-				if (depthValue > 255) depthValue = 255;
-				pixels[i] = new Color(depthValue / 255f, depthValue / 255f, depthValue / 255f, 1);
+				for(int j = 0; j < mat.Height; ++j)
+				{
+					//normalize depth value in millimeter so that 5m <-> color 255
+//					ushort depthValue = (ushort)(indexer[j, i] * 255 / (5000));
+//					if (depthValue > 255) depthValue = 255;
+//					pixels[i + j * mat.Width] = new Color(depthValue / 255f, depthValue / 255f, depthValue / 255f, 1);
+					float depthValue = 1.0f - (indexer[j, i] * multiplier);
+					pixels[i + j * mat.Width] = new Color(depthValue, depthValue, depthValue, 1);
+				}
 			}
-			
+
 			DepthMap.SetPixels(pixels);
 			DepthMap.Apply();
 		}
@@ -86,7 +100,7 @@ public class MyDepthImage : MonoBehaviour
 		{
 			_heightWidthRatio = (float) IisuInput.DepthMapHeight / (float) IisuInput.DepthMapWidth;
 
-			GUI.DrawTexture(new Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
+			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
 			                         Screen.height * NormalizedYCoordinate + Screen.width * NormalizedWidth * _heightWidthRatio,
 			                         -Screen.width * NormalizedWidth,
 			                         -Screen.width * NormalizedWidth * _heightWidthRatio), DepthMap);

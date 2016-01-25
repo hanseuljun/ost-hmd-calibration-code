@@ -2,6 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Iisu.Data;
+using OpenCvSharp;
 
 /// <summary>
 /// Helper class to convert iisu images to Unity images. 
@@ -25,12 +26,15 @@ public class MyImageConvertor
 		v = index / width;
 	}
 	
-	public static bool generateColorImage(IImageData image, int width, int height, ref Color32[] values)
+	public static bool generateColorImage(IImageData image, ref Mat mat)
 	{
 		if (image == null)
 			return false;
 		
 		if (image.Raw == IntPtr.Zero)
+			return false;
+
+		if ((image.ImageInfos.Width != mat.Width) || (image.ImageInfos.Height != mat.Height))
 			return false;
 		
 		byte[] imageRaw = new byte[image.ImageInfos.BytesRaw];
@@ -39,78 +43,61 @@ public class MyImageConvertor
 		
 		// copy image content into a managed array
 		Marshal.Copy(image.Raw, imageRaw, 0, (int)byte_size);
-		
-		int destinationU, destinationV;
-		int sourceU, sourceV;
-		int sourceIndex;
-		
-		int imageWidth = (int)image.ImageInfos.Width;
-		int imageHeight = (int)image.ImageInfos.Height;
-		
-		values = new Color32[width * height];
-		
-		//build up the user mask
-		for (int destinationIndex = 0; destinationIndex < values.Length; ++destinationIndex)
+
+		MatOfByte3 matB3 = new MatOfByte3 (mat);
+		var indexer = matB3.GetIndexer ();
+
+		int width = mat.Width;
+		int height = mat.Height;
+
+		for (int i = 0; i < width; ++i)
 		{
-			//get the UV coordinates from the final texture that will be displayed
-			getUV(destinationIndex, width, height, out destinationU, out destinationV);
+			for(int j = 0; j < height; ++j)
+			{
+				int index = i + j * width;
 			
-			//the resolutions of the depth and label image can differ from the final texture, 
-			//so we have to apply some remapping to get the equivalent UV coordinates in the depth and label image.
-			getUVEquivalent(width, height, destinationU, destinationV, imageWidth, imageHeight, out sourceU, out sourceV, out sourceIndex);
-			
-			// reconstruct ushort value from 2 bytes (low indian)
-			// values[destinationIndex] = (ushort)(imageRaw[sourceIndex * 2] + (imageRaw[sourceIndex * 2 + 1] << 8));
-			values[destinationIndex].r = imageRaw[destinationIndex * 4 + 2];
-			values[destinationIndex].g = imageRaw[destinationIndex * 4 + 1];
-			values[destinationIndex].b = imageRaw[destinationIndex * 4 + 0];
-			values[destinationIndex].a = 255;
+				indexer[j, i] = new Vec3b(imageRaw[index * 4 + 2],
+		                                  imageRaw[index * 4 + 1],
+		                                  imageRaw[index * 4 + 0]);
+			}
 		}
 		
 		return true;
 		
 	}
 	
-	public static bool generateDepthImage(IImageData image, int width, int height, ref ushort[] values)
+	public static bool generateDepthImage(IImageData image, ref Mat mat)
 	{
 		if (image == null)
 			return false;
 		
 		if (image.Raw == IntPtr.Zero)
 			return false;
+		
+		if ((image.ImageInfos.Width != mat.Width) || (image.ImageInfos.Height != mat.Height))
+			return false;
 
 		byte[] imageRaw = new byte[image.ImageInfos.BytesRaw];
 		
-		uint byte_size = (uint)image.ImageInfos.BytesRaw;
-		
 		// copy image content into a managed array
-		Marshal.Copy(image.Raw, imageRaw, 0, (int)byte_size);
+		Marshal.Copy(image.Raw, imageRaw, 0, (int)image.ImageInfos.BytesRaw);
 		
-		int destinationU, destinationV;
-		int sourceU, sourceV;
-		int sourceIndex;
-		
-		int imageWidth = (int)image.ImageInfos.Width;
-		int imageHeight = (int)image.ImageInfos.Height;
+		MatOfUShort matUS = new MatOfUShort (mat);
+		var indexer = matUS.GetIndexer ();
 
-		values = new ushort[width * height];
+		int width = mat.Width;
+		int height = mat.Height;
 
-		//build up the user mask
-		for (int destinationIndex = 0; destinationIndex < values.Length; ++destinationIndex)
+		for(int i = 0; i < width; ++i)
 		{
-			//get the UV coordinates from the final texture that will be displayed
-			getUV(destinationIndex, width, height, out destinationU, out destinationV);
-			
-			//the resolutions of the depth and label image can differ from the final texture, 
-			//so we have to apply some remapping to get the equivalent UV coordinates in the depth and label image.
-			getUVEquivalent(width, height, destinationU, destinationV, imageWidth, imageHeight, out sourceU, out sourceV, out sourceIndex);
-
-			// reconstruct ushort value from 2 bytes (low indian)
-			values[destinationIndex] = (ushort)(imageRaw[sourceIndex * 2] + (imageRaw[sourceIndex * 2 + 1] << 8));
+			for(int j = 0; j < height; ++j)
+			{
+				int index = i + j * width;
+				indexer[j, i] = (ushort)(imageRaw[index * 2] + (imageRaw[index * 2 + 1] << 8));
+			}
 		}
 		
 		return true;
-		
 	}
 	
 }

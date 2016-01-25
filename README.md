@@ -7,3 +7,9 @@
 3. Install Unity 5.2.4f1 (32bit)
 
 4. Connect camera to the USB 2.0 port (USB 3.0 not available)
+
+
+# Libraries
+
+- OpenCV Sharp 3.1
+- iisu 3.6

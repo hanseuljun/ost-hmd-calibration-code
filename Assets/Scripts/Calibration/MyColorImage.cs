@@ -41,7 +41,6 @@ public class MyColorImage : MonoBehaviour
 	void Awake()
 	{
 		_timer = 0;
-		Mat mat = new Mat ();
 	}
 	
 	/// <summary>
@@ -54,16 +53,33 @@ public class MyColorImage : MonoBehaviour
 		if(_timer >= 0.0333f)
 		{
 			_timer = 0;
-			
+
+			int width = IisuInput.ColorMapWidth;
+			int height = IisuInput.ColorMapHeight;
+
 			if (ColorMap == null)
 			{
-				ColorMap = new Texture2D(IisuInput.ColorMapWidth, IisuInput.ColorMapHeight, TextureFormat.ARGB32, false);
+				ColorMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
 			}
 			
-			Color32[] values = new Color32[0];
-			MyImageConvertor.generateColorImage(IisuInput.ColorMap, IisuInput.ColorMapWidth, IisuInput.ColorMapHeight, ref values);
+			Mat mat = new Mat(height, width, MatType.CV_8UC3);
+			MyImageConvertor.generateColorImage(IisuInput.ColorMap, ref mat);
 			
-			ColorMap.SetPixels32(values);
+			Color32[] pixels = new Color32[width * height];
+
+			MatOfByte3 matB3 = new MatOfByte3 (mat);
+			var indexer = matB3.GetIndexer ();
+
+			for(int i = 0; i < width; ++i)
+			{
+				for(int j = 0; j < height; ++j)
+				{
+					Vec3b color = indexer[j, i];
+					pixels[i + j * width] = new Color32(color.Item0, color.Item1, color.Item2, (byte) 255);
+				}
+			}
+
+			ColorMap.SetPixels32(pixels);
 			ColorMap.Apply();
 			
 		}
