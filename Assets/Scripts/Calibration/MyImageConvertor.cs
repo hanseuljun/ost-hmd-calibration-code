@@ -81,7 +81,7 @@ public class MyImageConvertor
 		
 		// copy image content into a managed array
 		Marshal.Copy(image.Raw, imageRaw, 0, (int)image.ImageInfos.BytesRaw);
-		
+
 		MatOfUShort matUS = new MatOfUShort (mat);
 		var indexer = matUS.GetIndexer ();
 

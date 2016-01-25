@@ -35,58 +35,35 @@ public class MyColorImage : MonoBehaviour
 	public float NormalizedWidth;
 	
 	private float _heightWidthRatio;
-	
-	private float _timer;
-	
-	void Awake()
+
+	public void SetImage(Mat mat)
 	{
-		_timer = 0;
-	}
-	
-	/// <summary>
-	/// We get the depth image from iisu, which is in a 16bit grey image format 
-	/// The image is converted by the ImageConvertor class to a Unity image, and then applied to the 2D GUI texture
-	/// </summary>	
-	void Update()
-	{
-		//we update the depthmap 30fps
-		if(_timer >= 0.0333f)
+		int width = mat.Width;
+		int height = mat.Height;
+
+		if (ColorMap == null)
 		{
-			_timer = 0;
-
-			int width = IisuInput.ColorMapWidth;
-			int height = IisuInput.ColorMapHeight;
-
-			if (ColorMap == null)
-			{
-				ColorMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
-			}
-			
-			Mat mat = new Mat(height, width, MatType.CV_8UC3);
-			MyImageConvertor.generateColorImage(IisuInput.ColorMap, ref mat);
-			
-			Color32[] pixels = new Color32[width * height];
-
-			MatOfByte3 matB3 = new MatOfByte3 (mat);
-			var indexer = matB3.GetIndexer ();
-
-			for(int i = 0; i < width; ++i)
-			{
-				for(int j = 0; j < height; ++j)
-				{
-					Vec3b color = indexer[j, i];
-					pixels[i + j * width] = new Color32(color.Item0, color.Item1, color.Item2, (byte) 255);
-				}
-			}
-
-			ColorMap.SetPixels32(pixels);
-			ColorMap.Apply();
-			
+			ColorMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
 		}
-		else
+
+		MyImageConvertor.generateColorImage(IisuInput.ColorMap, ref mat);
+		
+		Color32[] pixels = new Color32[width * height];
+		
+		MatOfByte3 matB3 = new MatOfByte3 (mat);
+		var indexer = matB3.GetIndexer ();
+		
+		for(int i = 0; i < width; ++i)
 		{
-			_timer += Time.deltaTime;
+			for(int j = 0; j < height; ++j)
+			{
+				Vec3b color = indexer[j, i];
+				pixels[i + (height - 1 - j) * width] = new Color32(color.Item0, color.Item1, color.Item2, (byte) 255);
+			}
 		}
+		
+		ColorMap.SetPixels32(pixels);
+		ColorMap.Apply();
 	}
 	
 	void OnGUI()
@@ -95,10 +72,10 @@ public class MyColorImage : MonoBehaviour
 		{
 			_heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
 			
-			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
-			                         Screen.height * NormalizedYCoordinate + Screen.width * NormalizedWidth * _heightWidthRatio,
-			                         -Screen.width * NormalizedWidth,
-			                         -Screen.width * NormalizedWidth * _heightWidthRatio), ColorMap);
+			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
+			                         Screen.height * NormalizedYCoordinate,
+			                         Screen.width * NormalizedWidth,
+			                         Screen.width * NormalizedWidth * _heightWidthRatio), ColorMap);
 		}
 	}
 }
