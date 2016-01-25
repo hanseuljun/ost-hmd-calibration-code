@@ -37,6 +37,7 @@ public class MyCalibration : MonoBehaviour
 			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
 			Mat depthMat255 = UShortMatToByteMat(depthMat);
+			depthMat255 = depthMat255.BilateralFilter(5, 50.0, 50.0, BorderTypes.Reflect101);
 
 			colorImage.SetImage(colorMat);
 			depthImage.SetByteImage(depthMat255);
