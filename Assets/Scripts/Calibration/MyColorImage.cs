@@ -22,6 +22,7 @@
 
 using UnityEngine;
 using System.Collections;
+using OpenCvSharp;
 
 public class MyColorImage : MonoBehaviour
 {
@@ -40,6 +41,7 @@ public class MyColorImage : MonoBehaviour
 	void Awake()
 	{
 		_timer = 0;
+		Mat mat = new Mat ();
 	}
 	
 	/// <summary>
@@ -77,7 +79,7 @@ public class MyColorImage : MonoBehaviour
 		{
 			_heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
 			
-			GUI.DrawTexture(new Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
+			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate + Screen.width * NormalizedWidth,
 			                         Screen.height * NormalizedYCoordinate + Screen.width * NormalizedWidth * _heightWidthRatio,
 			                         -Screen.width * NormalizedWidth,
 			                         -Screen.width * NormalizedWidth * _heightWidthRatio), ColorMap);

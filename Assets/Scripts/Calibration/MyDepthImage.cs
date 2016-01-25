@@ -73,7 +73,6 @@ public class MyDepthImage : MonoBehaviour
 			
 			DepthMap.SetPixels(pixels);
 			DepthMap.Apply();
-			
 		}
 		else
 		{
