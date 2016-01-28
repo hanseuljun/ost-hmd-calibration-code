@@ -2,11 +2,12 @@
 using System.Collections;
 using OpenCvSharp;
 
-public class MyCalibration : MonoBehaviour
+public class Calibration : MonoBehaviour
 {
 	public MyIisuInputProvider IisuInput;
 	public MyColorImage colorImage;
 	public MyDepthImage depthImage;
+	public DepthMesh depthMesh;
 	
 	private Texture2D depthMap;
 	private float timer;
@@ -36,44 +37,22 @@ public class MyCalibration : MonoBehaviour
 			Mat depthMat = new Mat(depthHeight, depthWidth, MatType.CV_16U);
 			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
-//			Mat depthMat255 = UShortMatToByteMat(depthMat);
-//			depthMat255 = depthMat255.BilateralFilter(5, 50.0, 50.0, BorderTypes.Reflect101);
-
 			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
 			depthMatFloat = depthMatFloat.BilateralFilter(5, 50.0, 50.0, BorderTypes.Default);
-			FilterFloatMat(depthMatFloat);
+
+			int fingerI;
+			int fingerJ;
+			FilterFloatMat(depthMatFloat, out fingerI, out fingerJ);
 
 			colorImage.SetImage(colorMat);
-			depthImage.SetFloatImage(depthMatFloat);
+			depthImage.SetFloatImage(depthMatFloat, fingerI, fingerJ);
+
+			depthMesh.SetFloatMat(depthMatFloat);
 		}
 		else
 		{
 			timer += Time.deltaTime;
 		}
-	}
-
-	private Mat UShortMatToByteMat(Mat ushortMat)
-	{
-		int width = ushortMat.Width;
-		int height = ushortMat.Height;
-
-		MatOfUShort matUS = new MatOfUShort (ushortMat);
-		var indexer = matUS.GetIndexer ();
-
-		Mat byteMat = new Mat (height, width, MatType.CV_8U);
-		MatOfByte matB = new MatOfByte (byteMat);
-		var byteIndexer = matB.GetIndexer ();
-
-		for(int i = 0; i < width; ++i)
-		{
-			for(int j = 0; j < height; ++j)
-			{
-				ushort us = indexer[j, i];
-				byteIndexer[j, i] = us > 2550 ? (byte) 255 : (byte) (us / 10);
-			}
-		}
-
-		return byteMat;
 	}
 	
 	private Mat UShortMatToFloatMat(Mat ushortMat)
@@ -100,13 +79,16 @@ public class MyCalibration : MonoBehaviour
 		return floatMat;
 	}
 
-	private void FilterFloatMat(Mat mat)
+	private void FilterFloatMat(Mat mat, out int fingerI, out int fingerJ)
 	{
 		int width = mat.Width;
 		int height = mat.Height;
 		
 		MatOfFloat matFloat = new MatOfFloat (mat);
 		var indexer = matFloat.GetIndexer ();
+
+		fingerI = 0;
+		fingerJ = int.MaxValue;
 
 		for(int i = 0; i < width; ++i)
 		{
@@ -116,6 +98,11 @@ public class MyCalibration : MonoBehaviour
 				if(value < 300.0f || value > 500.0f)
 				{
 					indexer[j, i] = 0.0f;
+				}
+				else if(j < fingerJ)
+				{
+					fingerI = i;
+					fingerJ = j;
 				}
 			}
 		}

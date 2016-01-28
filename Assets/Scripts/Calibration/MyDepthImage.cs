@@ -29,42 +29,10 @@ public class MyDepthImage : MonoBehaviour
 	public MyIisuInputProvider IisuInput;
 
 	public Texture2D DepthMap;
-	
+
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
-	
-	private float _heightWidthRatio;
-	
-	public void SetByteImage(Mat mat)
-	{	
-		int width = mat.Width;
-		int height = mat.Height;
-		
-		if(DepthMap == null)
-		{
-			DepthMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
-		}
-		
-		Color[] pixels = new Color[width * height];
-		
-		MatOfByte matUS = new MatOfByte (mat);
-		var indexer = matUS.GetIndexer ();
-		
-		float multiplier = 1.0f / 255.0f;
-		
-		for(int i = 0; i < width; ++i)
-		{
-			for(int j = 0; j < height; ++j)
-			{
-				float depthValue = 1.0f - (indexer[j, i] * multiplier);
-				pixels[i + (height - 1 - j) * width] = new Color(depthValue, depthValue, depthValue, 1);
-			}
-		}
-		
-		DepthMap.SetPixels(pixels);
-		DepthMap.Apply();
-	}
 
 	public void SetUShortImage(Mat mat)
 	{	
@@ -96,7 +64,7 @@ public class MyDepthImage : MonoBehaviour
 		DepthMap.Apply();
 	}
 	
-	public void SetFloatImage(Mat mat)
+	public void SetFloatImage(Mat mat, int fingerI, int fingerJ)
 	{	
 		int width = mat.Width;
 		int height = mat.Height;
@@ -112,16 +80,30 @@ public class MyDepthImage : MonoBehaviour
 		var indexer = matFloat.GetIndexer ();
 		
 		float multiplier = 1.0f / 5000.0f;
-		
+
 		for(int i = 0; i < width; ++i)
 		{
 			for(int j = 0; j < height; ++j)
 			{
-				float depthValue = 1.0f - (indexer[j, i] * multiplier);
+				float depthValue = indexer[j, i] * multiplier;
 				pixels[i + (height - 1 - j) * width] = new Color(depthValue, depthValue, depthValue, 1);
 			}
 		}
-		
+
+		if (fingerJ != int.MaxValue) {
+			for(int i = -1; i < 2; ++i)
+			{
+				for(int j = -1; j < 2; ++j)
+				{
+					int ii = fingerI + i;
+					int jj = fingerJ + j;
+					if(ii >= 0 && ii < width && jj >= 0 && jj < height)
+					{
+						pixels [ii + (height - 1 - jj) * width] = Color.red;
+					}
+				}
+			}
+		}
 		DepthMap.SetPixels(pixels);
 		DepthMap.Apply();
 	}
@@ -130,12 +112,12 @@ public class MyDepthImage : MonoBehaviour
 	{
 		if (DepthMap != null)
 		{
-			_heightWidthRatio = (float) IisuInput.DepthMapHeight / (float) IisuInput.DepthMapWidth;
+			float heightWidthRatio = (float) IisuInput.DepthMapHeight / (float) IisuInput.DepthMapWidth;
 
 			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
 			                         Screen.height * NormalizedYCoordinate,
 			                         Screen.width * NormalizedWidth,
-			                         Screen.width * NormalizedWidth * _heightWidthRatio), DepthMap);
+			                         Screen.width * NormalizedWidth * heightWidthRatio), DepthMap);
 		}
 	}
 }
