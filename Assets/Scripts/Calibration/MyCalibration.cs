@@ -36,11 +36,15 @@ public class MyCalibration : MonoBehaviour
 			Mat depthMat = new Mat(depthHeight, depthWidth, MatType.CV_16U);
 			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
-			Mat depthMat255 = UShortMatToByteMat(depthMat);
-			depthMat255 = depthMat255.BilateralFilter(5, 50.0, 50.0, BorderTypes.Reflect101);
+//			Mat depthMat255 = UShortMatToByteMat(depthMat);
+//			depthMat255 = depthMat255.BilateralFilter(5, 50.0, 50.0, BorderTypes.Reflect101);
+
+			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
+			depthMatFloat = depthMatFloat.BilateralFilter(5, 50.0, 50.0, BorderTypes.Default);
+			FilterFloatMat(depthMatFloat);
 
 			colorImage.SetImage(colorMat);
-			depthImage.SetByteImage(depthMat255);
+			depthImage.SetFloatImage(depthMatFloat);
 		}
 		else
 		{
@@ -70,5 +74,50 @@ public class MyCalibration : MonoBehaviour
 		}
 
 		return byteMat;
+	}
+	
+	private Mat UShortMatToFloatMat(Mat ushortMat)
+	{
+		int width = ushortMat.Width;
+		int height = ushortMat.Height;
+		
+		MatOfUShort matUS = new MatOfUShort (ushortMat);
+		var indexer = matUS.GetIndexer ();
+		
+		Mat floatMat = new Mat (height, width, MatType.CV_32F);
+		MatOfFloat matFloat = new MatOfFloat (floatMat);
+		var floatIndexer = matFloat.GetIndexer ();
+		
+		for(int i = 0; i < width; ++i)
+		{
+			for(int j = 0; j < height; ++j)
+			{
+				ushort us = indexer[j, i];
+				floatIndexer[j, i] = (float) us;
+			}
+		}
+		
+		return floatMat;
+	}
+
+	private void FilterFloatMat(Mat mat)
+	{
+		int width = mat.Width;
+		int height = mat.Height;
+		
+		MatOfFloat matFloat = new MatOfFloat (mat);
+		var indexer = matFloat.GetIndexer ();
+
+		for(int i = 0; i < width; ++i)
+		{
+			for(int j = 0; j < height; ++j)
+			{
+				float value = indexer[j, i];
+				if(value < 300.0f || value > 500.0f)
+				{
+					indexer[j, i] = 0.0f;
+				}
+			}
+		}
 	}
 }

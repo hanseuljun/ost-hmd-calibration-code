@@ -96,6 +96,36 @@ public class MyDepthImage : MonoBehaviour
 		DepthMap.Apply();
 	}
 	
+	public void SetFloatImage(Mat mat)
+	{	
+		int width = mat.Width;
+		int height = mat.Height;
+		
+		if(DepthMap == null)
+		{
+			DepthMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
+		}
+		
+		Color[] pixels = new Color[width * height];
+		
+		MatOfFloat matFloat = new MatOfFloat (mat);
+		var indexer = matFloat.GetIndexer ();
+		
+		float multiplier = 1.0f / 5000.0f;
+		
+		for(int i = 0; i < width; ++i)
+		{
+			for(int j = 0; j < height; ++j)
+			{
+				float depthValue = 1.0f - (indexer[j, i] * multiplier);
+				pixels[i + (height - 1 - j) * width] = new Color(depthValue, depthValue, depthValue, 1);
+			}
+		}
+		
+		DepthMap.SetPixels(pixels);
+		DepthMap.Apply();
+	}
+	
 	void OnGUI()
 	{
 		if (DepthMap != null)
