@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using OpenCvSharp;
 
 public class DepthMesh : MonoBehaviour {
@@ -15,44 +16,88 @@ public class DepthMesh : MonoBehaviour {
 	void Update () {
 	}
 
-	public void SetFloatMat(Mat mat)
-	{
+	public void SetFloatMat(Mat mat) {
 		int width = mat.Width;
 		int height = mat.Height;
 
 		MatOfFloat matFloat = new MatOfFloat (mat);
 		var indexer = matFloat.GetIndexer ();
 
-		Vector3[] vertices = new Vector3[width * height];
-		for(int i = 0; i < width; ++i)
-		{
-			for(int j = 0; j < height; ++j)
-			{
-				vertices[i + j * width] = new Vector3(i, j, indexer[j, i]);
+		CameraParameters depthCamera = CameraParameters.CreateMetaDepth ();
+
+		List<Vector3> vertices = new List<Vector3>();
+		int[] vertexMap = new int[width * height];
+		for (int i = 0; i < width; ++i) {
+			for (int j = 0; j < height; ++j) {
+				float depth = indexer[j, i];
+				if(indexer[j, i] > 0.0f && vertices.Count < 65000) {
+					vertexMap[i + j * width] = vertices.Count;
+
+					float x = (i * 2.0f / ((float) (width - 1))) - 1.0f;
+					float y = 1.0f - (j * 2.0f / ((float) (height - 1)));
+
+					x = (depthCamera.ScaleX * x + depthCamera.OffsetX) * depth;
+					y = (depthCamera.ScaleY * y + depthCamera.OffsetY) * depth;
+
+					vertices.Add(new Vector3(x, y, depth));
+				}
+				else {
+					vertexMap[i + j * width] = -1;
+				}
 			}
 		}
 
-		int[] indices = new int[(width - 1) * (height - 1) * 6];
-		for(int i = 0; i < width - 1; ++i)
-		{
-			for(int j = 0; j < height - 1; ++j)
-			{
-				int planeIndex = (i + j * (width - 1)) * 6;
+		List<int> indices = new List<int>();
+		for (int i = 0; i < width - 1; ++i) {
+			for (int j = 0; j < height - 1; ++j) {
 				int vertexIndex = i + j * width;
-				indices[planeIndex + 0] = vertexIndex;
-				indices[planeIndex + 1] = vertexIndex + width;
-				indices[planeIndex + 2] = vertexIndex + 1;
-				indices[planeIndex + 3] = vertexIndex + 1;
-				indices[planeIndex + 4] = vertexIndex + width;
-				indices[planeIndex + 5] = vertexIndex + width + 1;
+
+				int index0 = vertexMap[vertexIndex];
+				int index1 = vertexMap[vertexIndex + width];
+				int index2 = vertexMap[vertexIndex + 1];
+				int index3 = vertexMap[vertexIndex + width + 1];
+
+				int validCount = (index0 != -1 ? 1 : 0) + (index1 != -1 ? 1 : 0)
+					+ (index2 != -1 ? 1 : 0) + (index3 != -1 ? 1 : 0);
+				
+				if(validCount == 4) {
+					indices.Add(index0);
+					indices.Add(index2);
+					indices.Add(index1);
+
+					indices.Add(index2);
+					indices.Add(index3);
+					indices.Add(index1);
+				}
+				else if(validCount == 3) {
+					if(index0 == -1) {
+						indices.Add(index2);
+						indices.Add(index3);
+						indices.Add(index1);
+					}
+					else if(index1 == -1) {
+						indices.Add(index0);
+						indices.Add(index3);
+						indices.Add(index2);
+					}
+					else if(index2 == -1) {
+						indices.Add(index0);
+						indices.Add(index1);
+						indices.Add(index3);
+					}
+					else {
+						indices.Add(index0);
+						indices.Add(index2);
+						indices.Add(index1);
+					}
+				}
 			}
 		}
 
-		//TODO: reduce triangles
-//		Mesh mesh = new Mesh ();
-//		mesh.vertices = vertices;
-//		mesh.SetIndices (indices, MeshTopology.Triangles, 0);
-//
-//		filter.mesh = mesh;
+		Mesh mesh = new Mesh ();
+		mesh.vertices = vertices.ToArray();
+		mesh.SetIndices (indices.ToArray(), MeshTopology.Triangles, 0);
+
+		filter.mesh = mesh;
 	}
 }

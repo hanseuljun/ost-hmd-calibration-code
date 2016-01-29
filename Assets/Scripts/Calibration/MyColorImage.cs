@@ -28,7 +28,7 @@ public class MyColorImage : MonoBehaviour
 {
 	public MyIisuInputProvider IisuInput;
 	
-	public Texture2D ColorMap;
+	public Texture2D ColorMap { get; private set; }
 	
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;

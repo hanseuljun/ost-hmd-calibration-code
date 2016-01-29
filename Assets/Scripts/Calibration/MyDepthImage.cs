@@ -79,7 +79,8 @@ public class MyDepthImage : MonoBehaviour
 		MatOfFloat matFloat = new MatOfFloat (mat);
 		var indexer = matFloat.GetIndexer ();
 		
-		float multiplier = 1.0f / 5000.0f;
+//		float multiplier = 1.0f / 5000.0f;
+		float multiplier = 1.0f / 1000.0f;
 
 		for(int i = 0; i < width; ++i)
 		{
