@@ -1,0 +1,53 @@
+reference: https://komputervision.wordpress.com/2014/01/29/ds325%EC%9D%98-depth%EC%99%80-rgb-%EC%B9%B4%EB%A9%94%EB%9D%BC/
+
+– depth camera Intrinsics (DepthSense::IntrinsicParameters)
+ width    320
+ height    240
+ fx    224.50200
+ fy    230.49400
+ cx    160.00000
+ cy    120.00000
+ k1    -0.17010300
+ k2    0.14406399
+ k3    -0.047699399
+ p1    0.00000000
+ p2    0.00000000
+
+– color camera Intrinsics (DepthSense::IntrinsicParameters)
+ width    640
+ height    480
+ fx    583.07898
+ fy    596.20300
+ cx    320.00000
+ cy    240.00000
+ k1    0.022575200
+ k2    -0.16266800
+ k3    0.18613800
+ p1    0.00000000
+ p2    0.00000000
+
+– extrinsics (DepthSense::ExtrinsicParameters)
+ r11    0.99999738
+ r12    0.0012669859
+ r13    -0.0019156976
+ r21    0.0012539299
+ r22    -0.99997610
+ r23    -0.0068011540
+ r31    0.0019242687
+ r32    -0.0067987340
+ r33    0.99997503
+ t1    0.024492104
+ t2    -0.00050799217
+ t3    -0.00086258771
+
+R =
+
+[    r11    r12    r13    ]
+ [    r21    r22    r23    ]
+ [    r31    r32    r33    ]
+
+t =
+
+[    t1    ]
+ [    t2    ]
+ [    t3    ]

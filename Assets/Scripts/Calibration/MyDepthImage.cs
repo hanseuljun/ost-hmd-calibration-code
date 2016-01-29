@@ -80,7 +80,7 @@ public class MyDepthImage : MonoBehaviour
 		var indexer = matFloat.GetIndexer ();
 		
 //		float multiplier = 1.0f / 5000.0f;
-		float multiplier = 1.0f / 1000.0f;
+		float multiplier = 1.0f / 1.0f; // up to 1m
 
 		for(int i = 0; i < width; ++i)
 		{

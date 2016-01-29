@@ -38,17 +38,18 @@ public class Calibration : MonoBehaviour
 			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
 			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
-			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Default);
+			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Constant);
 //			depthMatFloat = depthMatFloat.BilateralFilter(5, 10000.0, 10000.0, BorderTypes.Reflect101);
 
 			int fingerI;
 			int fingerJ;
 			FilterFloatMat(depthMatFloat, out fingerI, out fingerJ);
 
-//			colorImage.SetImage(colorMat);
+			colorImage.SetImage(colorMat);
 			depthImage.SetFloatImage(depthMatFloat, fingerI, fingerJ);
 
 			depthMesh.SetFloatMat(depthMatFloat);
+			depthMesh.SetTexture(colorImage.ColorMap);
 		}
 		else
 		{
@@ -73,7 +74,7 @@ public class Calibration : MonoBehaviour
 			for(int j = 0; j < height; ++j)
 			{
 				ushort us = indexer[j, i];
-				floatIndexer[j, i] = (float) us;
+				floatIndexer[j, i] = (float) us * 0.001f; // millis to meters
 			}
 		}
 		
@@ -96,7 +97,7 @@ public class Calibration : MonoBehaviour
 			for(int j = 0; j < height; ++j)
 			{
 				float value = indexer[j, i];
-				if(value < 250.0f || value > 600.0f)
+				if(value < 0.25f || value > 0.6f)
 				{
 					indexer[j, i] = 0.0f;
 				}

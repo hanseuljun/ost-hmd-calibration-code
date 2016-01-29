@@ -6,10 +6,12 @@ using OpenCvSharp;
 public class DepthMesh : MonoBehaviour {
 
 	private MeshFilter filter;
+	private MeshRenderer meshRenderer;
 
 	// Use this for initialization
 	void Start () {
 		filter = GetComponent<MeshFilter> ();
+		meshRenderer = GetComponent<MeshRenderer> ();
 	}
 	
 	// Update is called once per frame
@@ -24,25 +26,47 @@ public class DepthMesh : MonoBehaviour {
 		var indexer = matFloat.GetIndexer ();
 
 		CameraParameters depthCamera = CameraParameters.CreateMetaDepth ();
+		CameraParameters colorCamera = CameraParameters.CreateMetaColor ();
+
+		if (width != depthCamera.Width || height != depthCamera.Height) {
+			Debug.LogError("Wrong Parameters!");
+		}
 
 		List<Vector3> vertices = new List<Vector3>();
+		List<Vector2> uv = new List<Vector2> ();
 		int[] vertexMap = new int[width * height];
 		for (int i = 0; i < width; ++i) {
 			for (int j = 0; j < height; ++j) {
+				vertexMap[i + j * width] = -1;
+
 				float depth = indexer[j, i];
-				if(indexer[j, i] > 0.0f && vertices.Count < 65000) {
-					vertexMap[i + j * width] = vertices.Count;
+				if(depth > 0.0f && vertices.Count < 65000) {
+					//Pixels ([0, depth width] x [0, depth height]) to Meters
+					Vector3 depthVertex = DepthPixelToVertex(i, height - 1 - j, depth, depthCamera);
+					
+					//Meters to Meters
+					Vector3 colorVertex = DepthVertexToColorVertex(depthVertex);
+//					Vector3 colorVertex = depthVertex;
 
-					float x = (i * 2.0f / ((float) (width - 1))) - 1.0f;
-					float y = 1.0f - (j * 2.0f / ((float) (height - 1)));
+					float u;
+					float v;
 
-					x = (depthCamera.ScaleX * x + depthCamera.OffsetX) * depth;
-					y = (depthCamera.ScaleY * y + depthCamera.OffsetY) * depth;
+					//Meters to Pixels ([0, color width] x [0, color height])
+					ColorVertexToPixel(colorVertex, colorCamera, out u, out v);
 
-					vertices.Add(new Vector3(x, y, depth));
-				}
-				else {
-					vertexMap[i + j * width] = -1;
+					//Changing scale from pixels to [-1, 1]
+					u /= colorCamera.Width;
+					v /= colorCamera.Height;
+					
+					//Changing scale from [-1, 1] to [0, 1]
+//					u = u * 0.5f + 0.5f;
+//					v = v * 0.5f + 0.5f;
+
+					if(u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f) {
+						vertexMap[i + j * width] = vertices.Count;
+						vertices.Add(depthVertex);
+						uv.Add(new Vector2(u, v));
+					}
 				}
 			}
 		}
@@ -96,8 +120,72 @@ public class DepthMesh : MonoBehaviour {
 
 		Mesh mesh = new Mesh ();
 		mesh.vertices = vertices.ToArray();
+		mesh.uv = uv.ToArray ();
 		mesh.SetIndices (indices.ToArray(), MeshTopology.Triangles, 0);
 
 		filter.mesh = mesh;
+	}
+
+	private Vector3 DepthPixelToVertex(int u, int v, float depth, CameraParameters depthCamera) {
+		float x = (u - depthCamera.CX) / depthCamera.FX;
+		float y = (v - depthCamera.CY) / depthCamera.FY;
+
+		//is this inverse okay?
+//		float r2 = x * x + y * y;
+//		float radialDistortion = 1.0f + r2 * depthCamera.K1
+//			+ r2 * r2 * depthCamera.K2 + r2 * r2 * r2 * depthCamera.K3;
+//
+//		x /= radialDistortion;
+//		y /= radialDistortion;
+		
+		return new Vector3(x * depth, y * depth, depth);
+	}
+
+	private Vector3 DepthVertexToColorVertex(Vector3 depthVertex) {
+		float r11 = 0.99999738f;
+		float r12 = 0.0012669859f;
+		float r13 = -0.0019156976f;
+		float r21 = 0.0012539299f;
+		float r22 = -0.99997610f;
+		float r23 = -0.0068011540f;
+		float r31 = 0.0019242687f;
+		float r32 = -0.0067987340f;
+		float r33 = 0.99997503f;
+		float t1 = 0.024492104f;
+		float t2 = -0.00050799217f;
+		float t3 = -0.00086258771f;
+
+		float dx = depthVertex.x;
+		float dy = depthVertex.y;
+		float dz = -depthVertex.z;
+
+		//TODO: check if this is right
+		float cx = r11 * dx + r12 * dy + r13 * dz + t1;
+		float cy = r21 * dx + r22 * dy + r23 * dz + t2;
+		float cz = r31 * dx + r32 * dy + r33 * dz + t3;
+		cy *= -1.0f;
+		cz *= -1.0f;
+
+		return new Vector3(cx, cy, cz);
+	}
+
+	private void ColorVertexToPixel(Vector3 colorVertex, CameraParameters colorCamera,
+                                    out float u, out float v) {
+		float x = colorVertex.x / colorVertex.z;
+		float y = colorVertex.y / colorVertex.z;
+
+//		float r2 = x * x + y * y;
+//		float radialDistortion = 1.0f + colorCamera.K1 * r2
+//			+ colorCamera.K2 * r2 * r2 + colorCamera.K3 * r2 * r2 * r2;
+//
+//		x *= radialDistortion;
+//		y *= radialDistortion;
+
+		u = x * colorCamera.FX + colorCamera.CX;
+		v = y * colorCamera.FY + colorCamera.CY;
+	}
+	
+	public void SetTexture(Texture texture) {
+		meshRenderer.material.mainTexture = texture;
 	}
 }

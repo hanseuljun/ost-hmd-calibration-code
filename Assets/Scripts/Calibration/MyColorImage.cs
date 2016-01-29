@@ -33,8 +33,6 @@ public class MyColorImage : MonoBehaviour
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
-	
-	private float _heightWidthRatio;
 
 	public void SetImage(Mat mat)
 	{
@@ -70,12 +68,12 @@ public class MyColorImage : MonoBehaviour
 	{
 		if (ColorMap != null)
 		{
-			_heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
+			float heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
 			
 			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
 			                         Screen.height * NormalizedYCoordinate,
 			                         Screen.width * NormalizedWidth,
-			                         Screen.width * NormalizedWidth * _heightWidthRatio), ColorMap);
+			                         Screen.width * NormalizedWidth * heightWidthRatio), ColorMap);
 		}
 	}
 }
