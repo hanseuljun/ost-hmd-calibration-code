@@ -11,14 +11,13 @@ using System.Collections.Generic;
 /// </summary>
 public class IisuInputProvider : MonoBehaviour
 {
-	
 	//the IisuUnityBehaviour object handles the iisu device, including its update thread, and disposing.
-	private IisuUnityBehaviour _iisuUnity;
+	private IisuUnityBehaviour iisuUnity;
 	
-	private IDataHandle<Iisu.Data.IImageData> _colorImage;
+	private IDataHandle<Iisu.Data.IImageData> colorImage;
 	private IParameterHandle<int> colorWidth;
 	private IParameterHandle<int> colorHeight;
-	private IDataHandle<Iisu.Data.IImageData> _depthImage;
+	private IDataHandle<Iisu.Data.IImageData> depthImage;
 	private IParameterHandle<int> depthWidth;
 	private IParameterHandle<int> depthHeight;
 	
@@ -27,44 +26,24 @@ public class IisuInputProvider : MonoBehaviour
 	void Awake ()
 	{
 		//this has to be done first. Inside the IisuUnityBehaviour object, iisu is initialized, and the update thread for the current device (camera, movie) is started
-		_iisuUnity = GetComponent<IisuUnityBehaviour> ();
-		_iisuUnity.Initialize ();
+		iisuUnity = GetComponent<IisuUnityBehaviour> ();
+		iisuUnity.Initialize ();
 		
-		_colorImage = _iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.COLOR.Image");
-		colorWidth = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Width");
-		colorHeight = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Height");
+		colorImage = iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.COLOR.Image");
+		colorWidth = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Width");
+		colorHeight = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Height");
 
 		//register iisu data needed to display the depthimage
-		_depthImage = _iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.DEPTH.Image");
-		depthWidth = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Width");
-		depthHeight = _iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Height");
-		
-		_poseIDsDetected = new List<uint>();
-	}
-	
-	public List<uint> DetectedPoses
-	{
-		get
-		{
-			List<uint> poses = new List<uint>(_poseIDsDetected);
-			_poseIDsDetected.Clear();
-			return poses;	
-		}
-	}
-	
-	public IDevice Device 
-	{
-		get 
-		{ 
-			return _iisuUnity.Device; 
-		}
+		depthImage = iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.DEPTH.Image");
+		depthWidth = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Width");
+		depthHeight = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.DEPTH.Height");
 	}
 	
 	public Iisu.Data.IImageData ColorMap 
 	{
 		get 
 		{ 
-			return _colorImage.Value; 
+			return colorImage.Value; 
 		}
 	}
 
@@ -88,7 +67,7 @@ public class IisuInputProvider : MonoBehaviour
 	{
 		get
 		{ 
-			return _depthImage.Value; 
+			return depthImage.Value; 
 		}
 	}
 	

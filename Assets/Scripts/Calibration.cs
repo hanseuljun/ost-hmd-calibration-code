@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using OpenCvSharp;
 
@@ -9,6 +10,7 @@ public class Calibration : MonoBehaviour
 	public DepthImage depthImage;
 	public BlobImage blobImage;
 	public DepthMesh depthMesh;
+	public Text text;
 
 	private Texture2D colorMap;
 	private float timer;
@@ -64,6 +66,8 @@ public class Calibration : MonoBehaviour
 
 			depthMesh.SetFloatMat(depthMat, blobMat);
 			depthMesh.SetTexture(colorMap);
+
+			text.text = depthMesh.fingerTip.localPosition.z.ToString();
 		}
 		else
 		{
