@@ -28,26 +28,21 @@ public class ColorImage : MonoBehaviour
 {
 	public IisuInputProvider IisuInput;
 	
-	public Texture2D ColorMap { get; private set; }
+	private Texture2D colorMap;
 	
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
 
-	public void SetImage(Mat mat)
-	{
+	public static void ConvertColorMat(Mat mat, ref Texture2D colorMap) {
 		int width = mat.Width;
 		int height = mat.Height;
-
-		if (ColorMap == null) {
-			ColorMap = new Texture2D(width, height);
-		}
 		
 		Color32[] pixels = new Color32[width * height];
 		
 		MatOfByte3 matB3 = new MatOfByte3 (mat);
 		var indexer = matB3.GetIndexer ();
-
+		
 		for(int i = 0; i < width; ++i)
 		{
 			for(int j = 0; j < height; ++j)
@@ -57,20 +52,25 @@ public class ColorImage : MonoBehaviour
 			}
 		}
 		
-		ColorMap.SetPixels32(pixels);
-		ColorMap.Apply();
+		colorMap.SetPixels32(pixels);
+		colorMap.Apply();
+	}
+
+	public void SetImage(Texture2D colorMap)
+	{
+		this.colorMap = colorMap;
 	}
 	
 	void OnGUI()
 	{
-		if (ColorMap != null)
+		if (colorMap != null)
 		{
-			float heightWidthRatio = (float) ColorMap.height / (float) ColorMap.width;
+			float heightWidthRatio = (float) colorMap.height / (float) colorMap.width;
 			
 			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
 			                         Screen.height * NormalizedYCoordinate,
 			                         Screen.width * NormalizedWidth,
-			                         Screen.width * NormalizedWidth * heightWidthRatio), ColorMap);
+			                                     Screen.width * NormalizedWidth * heightWidthRatio), colorMap);
 		}
 	}
 }

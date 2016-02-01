@@ -82,8 +82,8 @@ public class ImageConvertor
 		// copy image content into a managed array
 		Marshal.Copy(image.Raw, imageRaw, 0, (int)image.ImageInfos.BytesRaw);
 
-		MatOfUShort matUS = new MatOfUShort (mat);
-		var indexer = matUS.GetIndexer ();
+		MatOfFloat matFloat = new MatOfFloat (mat);
+		var indexer = matFloat.GetIndexer ();
 
 		int width = mat.Width;
 		int height = mat.Height;
@@ -93,7 +93,8 @@ public class ImageConvertor
 			for(int j = 0; j < height; ++j)
 			{
 				int index = i + j * width;
-				indexer[j, i] = (ushort)(imageRaw[index * 2] + (imageRaw[index * 2 + 1] << 8));
+				ushort depth = (ushort)(imageRaw[index * 2] + (imageRaw[index * 2 + 1] << 8));
+				indexer[j, i] = depth * 0.001f;
 			}
 		}
 		
