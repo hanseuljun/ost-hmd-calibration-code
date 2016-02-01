@@ -39,7 +39,7 @@ public class Calibration : MonoBehaviour
 			ImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
 			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
-			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Constant);
+//			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Constant);
 
 			int fingerI;
 			int fingerJ;

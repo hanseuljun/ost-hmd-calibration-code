@@ -51,3 +51,41 @@ t =
 [    t1    ]
  [    t2    ]
  [    t3    ]
+
+
+reference: http://www.epson.com/cgi-bin/Store/jsp/Product.do?sku=V11H423020#whats-in-the-box
+
+Head Set
+
+Perceived Image Size:  80" at 16.4 feet (5m)1 
+
+Resolution:  960 x 540 pixels (qHD) 
+
+Pixel Number:  518,400 dots (960 x 540 x 3) 
+
+Micro-Projection Optical Engine:  
+•0.52" Poli-silicon TFT active Matrix Color LCD
+•LED light source
+
+
+Aspect Ratio:  16:9 
+
+Field of View:  23 degrees 
+
+Color Depth:  24-bit color (16.77 million colors) 
+
+Refresh Rate:  60 Hz (NTSC, Android) 
+
+Transparency (of light guide):  up to 70% maximum 
+
+Lens Shade:  Removable 
+
+Sound Output:  1.5mW / 16 ohm (2.5mm Mono x 2) 
+
+Virtual Surround Sound:  Dolby® Mobile 
+
+Dimensions (D x W x H):  7.0" x 8.1" x 1.9" (178mm x 205mm x 47mm) 
+
+Weight:  
+•without lens shade: 7.76 oz (220g)
+•with lens shade: 8.47 oz (240g)
