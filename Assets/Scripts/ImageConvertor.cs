@@ -7,7 +7,7 @@ using OpenCvSharp;
 /// <summary>
 /// Helper class to convert iisu images to Unity images. 
 /// </summary>
-public class MyImageConvertor
+public class ImageConvertor
 {
 	private static void getUVEquivalent(int fromWidth, int fromHeight, int fromU, int fromV, int toWidth, int toHeight, out int toU, out int toV, out int toIndex)
 	{

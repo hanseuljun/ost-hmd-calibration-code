@@ -24,9 +24,9 @@ using UnityEngine;
 using System.Collections;
 using OpenCvSharp;
 
-public class MyColorImage : MonoBehaviour
+public class ColorImage : MonoBehaviour
 {
-	public MyIisuInputProvider IisuInput;
+	public IisuInputProvider IisuInput;
 	
 	public Texture2D ColorMap { get; private set; }
 	

@@ -24,9 +24,9 @@ using UnityEngine;
 using System.Collections;
 using OpenCvSharp;
 
-public class MyDepthImage : MonoBehaviour
+public class DepthImage : MonoBehaviour
 {
-	public MyIisuInputProvider IisuInput;
+	public IisuInputProvider IisuInput;
 
 	public Texture2D DepthMap;
 

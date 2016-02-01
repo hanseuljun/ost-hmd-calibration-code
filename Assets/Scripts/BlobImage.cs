@@ -3,9 +3,9 @@ using System.Collections;
 using OpenCvSharp;
 using OpenCvSharp.Blob;
 
-public class MyBlobImage : MonoBehaviour
+public class BlobImage : MonoBehaviour
 {	
-	public MyIisuInputProvider IisuInput;
+	public IisuInputProvider IisuInput;
 	
 	public Texture2D BlobMap { get; private set; }
 	

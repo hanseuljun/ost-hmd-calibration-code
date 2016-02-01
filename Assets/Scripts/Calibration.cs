@@ -1,13 +1,13 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using OpenCvSharp;
 
 public class Calibration : MonoBehaviour
 {
-	public MyIisuInputProvider IisuInput;
-	public MyColorImage colorImage;
-	public MyDepthImage depthImage;
-	public MyBlobImage blobImage;
+	public IisuInputProvider IisuInput;
+	public ColorImage colorImage;
+	public DepthImage depthImage;
+	public BlobImage blobImage;
 	public DepthMesh depthMesh;
 	
 	private Texture2D depthMap;
@@ -30,13 +30,13 @@ public class Calibration : MonoBehaviour
 			int colorHeight = IisuInput.ColorMapHeight;
 			
 			Mat colorMat = new Mat(colorHeight, colorWidth, MatType.CV_8UC3);
-			MyImageConvertor.generateColorImage(IisuInput.ColorMap, ref colorMat);
+			ImageConvertor.generateColorImage(IisuInput.ColorMap, ref colorMat);
 
 			int depthWidth = IisuInput.DepthMapWidth;
 			int depthHeight = IisuInput.DepthMapHeight;
 			
 			Mat depthMat = new Mat(depthHeight, depthWidth, MatType.CV_16U);
-			MyImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
+			ImageConvertor.generateDepthImage(IisuInput.DepthMap, ref depthMat);
 
 			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
 			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Constant);
@@ -45,7 +45,7 @@ public class Calibration : MonoBehaviour
 			int fingerJ;
 			FilterFloatMat(depthMatFloat, out fingerI, out fingerJ);
 			
-			Mat blobMat = MyBlobImage.ConvertDepthMat(depthMatFloat);
+			Mat blobMat = BlobImage.ConvertDepthMat(depthMatFloat);
 
 			if(colorImage.enabled) {
 				colorImage.SetImage(colorMat);

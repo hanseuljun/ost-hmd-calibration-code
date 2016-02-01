@@ -9,7 +9,7 @@ using System.Collections.Generic;
 /// Takes care of the communication between iisu and the Unity application by providing
 /// the necessary data from iisu
 /// </summary>
-public class MyIisuInputProvider : MonoBehaviour
+public class IisuInputProvider : MonoBehaviour
 {
 	
 	//the IisuUnityBehaviour object handles the iisu device, including its update thread, and disposing.
