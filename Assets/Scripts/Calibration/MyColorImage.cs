@@ -39,18 +39,15 @@ public class MyColorImage : MonoBehaviour
 		int width = mat.Width;
 		int height = mat.Height;
 
-		if (ColorMap == null)
-		{
-			ColorMap = new Texture2D(width, height, TextureFormat.ARGB32, false);
+		if (ColorMap == null) {
+			ColorMap = new Texture2D(width, height);
 		}
-
-		MyImageConvertor.generateColorImage(IisuInput.ColorMap, ref mat);
 		
 		Color32[] pixels = new Color32[width * height];
 		
 		MatOfByte3 matB3 = new MatOfByte3 (mat);
 		var indexer = matB3.GetIndexer ();
-		
+
 		for(int i = 0; i < width; ++i)
 		{
 			for(int j = 0; j < height; ++j)
@@ -68,7 +65,7 @@ public class MyColorImage : MonoBehaviour
 	{
 		if (ColorMap != null)
 		{
-			float heightWidthRatio = (float) IisuInput.ColorMapHeight / (float) IisuInput.ColorMapWidth;
+			float heightWidthRatio = (float) ColorMap.height / (float) ColorMap.width;
 			
 			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
 			                         Screen.height * NormalizedYCoordinate,

@@ -78,8 +78,7 @@ public class MyDepthImage : MonoBehaviour
 		
 		MatOfFloat matFloat = new MatOfFloat (mat);
 		var indexer = matFloat.GetIndexer ();
-		
-//		float multiplier = 1.0f / 5000.0f;
+
 		float multiplier = 1.0f / 1.0f; // up to 1m
 
 		for(int i = 0; i < width; ++i)
@@ -113,7 +112,7 @@ public class MyDepthImage : MonoBehaviour
 	{
 		if (DepthMap != null)
 		{
-			float heightWidthRatio = (float) IisuInput.DepthMapHeight / (float) IisuInput.DepthMapWidth;
+			float heightWidthRatio = (float) DepthMap.height / (float) DepthMap.width;
 
 			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
 			                         Screen.height * NormalizedYCoordinate,

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using OpenCvSharp;
 
 public class DepthMesh : MonoBehaviour {
-
+	
+	public Transform fingerTip;
 	private MeshFilter filter;
 	private MeshRenderer meshRenderer;
 
@@ -18,17 +19,24 @@ public class DepthMesh : MonoBehaviour {
 	void Update () {
 	}
 
-	public void SetFloatMat(Mat mat) {
-		int width = mat.Width;
-		int height = mat.Height;
+	public void SetFloatMat(Mat depthMat, Mat blobMat) {
+		int width = depthMat.Width;
+		int height = depthMat.Height;
 
-		MatOfFloat matFloat = new MatOfFloat (mat);
+		MatOfFloat matFloat = new MatOfFloat (depthMat);
 		var indexer = matFloat.GetIndexer ();
+		
+		MatOfByte3 matBlob = new MatOfByte3 (blobMat);
+		var blobIndexer = matBlob.GetIndexer ();
 
 		CameraParameters depthCamera = CameraParameters.CreateMetaDepth ();
 		CameraParameters colorCamera = CameraParameters.CreateMetaColor ();
 
 		if (width != depthCamera.Width || height != depthCamera.Height) {
+			Debug.LogError("Wrong Parameters!");
+		}
+		
+		if (width != blobMat.Width || height != blobMat.Height) {
 			Debug.LogError("Wrong Parameters!");
 		}
 
@@ -40,13 +48,12 @@ public class DepthMesh : MonoBehaviour {
 				vertexMap[i + j * width] = -1;
 
 				float depth = indexer[j, i];
-				if(depth > 0.0f && vertices.Count < 65000) {
+				if(depth > 0.0f && blobIndexer[j, i].Item0 != 0 && vertices.Count < 65000) {
 					//Pixels ([0, depth width] x [0, depth height]) to Meters
 					Vector3 depthVertex = DepthPixelToVertex(i, height - 1 - j, depth, depthCamera);
 					
 					//Meters to Meters
 					Vector3 colorVertex = DepthVertexToColorVertex(depthVertex);
-//					Vector3 colorVertex = depthVertex;
 
 					float u;
 					float v;
@@ -57,10 +64,6 @@ public class DepthMesh : MonoBehaviour {
 					//Changing scale from pixels to [-1, 1]
 					u /= colorCamera.Width;
 					v /= colorCamera.Height;
-					
-					//Changing scale from [-1, 1] to [0, 1]
-//					u = u * 0.5f + 0.5f;
-//					v = v * 0.5f + 0.5f;
 
 					if(u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f) {
 						vertexMap[i + j * width] = vertices.Count;
@@ -123,7 +126,23 @@ public class DepthMesh : MonoBehaviour {
 		mesh.uv = uv.ToArray ();
 		mesh.SetIndices (indices.ToArray(), MeshTopology.Triangles, 0);
 
+		Mesh temp = filter.sharedMesh;
 		filter.mesh = mesh;
+
+		if (temp != null) {
+			Destroy(temp);
+		}
+
+		Vector3 fingerTipPosition = new Vector3 (0.0f, float.NegativeInfinity, 0.0f);
+		foreach (var vertex in vertices) {
+			if((vertex.y - vertex.z * 0.5f) > (fingerTipPosition.y - fingerTipPosition.z * 0.5f)) {
+				fingerTipPosition = vertex;
+			}
+		}
+
+		if (!float.IsNegativeInfinity (fingerTipPosition.y)) {
+			fingerTip.localPosition = fingerTipPosition;
+		}
 	}
 
 	private Vector3 DepthPixelToVertex(int u, int v, float depth, CameraParameters depthCamera) {

@@ -7,6 +7,7 @@ public class Calibration : MonoBehaviour
 	public MyIisuInputProvider IisuInput;
 	public MyColorImage colorImage;
 	public MyDepthImage depthImage;
+	public MyBlobImage blobImage;
 	public DepthMesh depthMesh;
 	
 	private Texture2D depthMap;
@@ -39,16 +40,26 @@ public class Calibration : MonoBehaviour
 
 			Mat depthMatFloat = UShortMatToFloatMat(depthMat);
 			depthMatFloat = depthMatFloat.BilateralFilter(5, 5.0, 5.0, BorderTypes.Constant);
-//			depthMatFloat = depthMatFloat.BilateralFilter(5, 10000.0, 10000.0, BorderTypes.Reflect101);
 
 			int fingerI;
 			int fingerJ;
 			FilterFloatMat(depthMatFloat, out fingerI, out fingerJ);
+			
+			Mat blobMat = MyBlobImage.ConvertDepthMat(depthMatFloat);
 
-			colorImage.SetImage(colorMat);
-			depthImage.SetFloatImage(depthMatFloat, fingerI, fingerJ);
+			if(colorImage.enabled) {
+				colorImage.SetImage(colorMat);
+			}
 
-			depthMesh.SetFloatMat(depthMatFloat);
+			if(depthImage.enabled) {
+				depthImage.SetFloatImage(depthMatFloat, fingerI, fingerJ);
+			}
+
+			if(blobImage.enabled) {
+				blobImage.SetBlobMat(depthMatFloat);
+			}
+
+			depthMesh.SetFloatMat(depthMatFloat, blobMat);
 			depthMesh.SetTexture(colorImage.ColorMap);
 		}
 		else
