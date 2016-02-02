@@ -5,17 +5,10 @@ using OpenCvSharp;
 
 public class DepthMesh : MonoBehaviour {
 	
+	public MeshFilter filter;
+	public MeshRenderer meshRenderer;
 	public Transform fingerTip;
-	private MeshFilter filter;
-	private MeshRenderer meshRenderer;
 
-	// Use this for initialization
-	void Start () {
-		filter = GetComponent<MeshFilter> ();
-		meshRenderer = GetComponent<MeshRenderer> ();
-	}
-	
-	// Update is called once per frame
 	void Update () {
 	}
 

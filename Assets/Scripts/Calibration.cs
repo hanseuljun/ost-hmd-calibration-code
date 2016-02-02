@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using OpenCvSharp;
 
 public class Calibration : MonoBehaviour
@@ -10,20 +11,31 @@ public class Calibration : MonoBehaviour
 	public DepthImage depthImage;
 	public BlobImage blobImage;
 	public DepthMesh depthMesh;
+	public StereoCamera stereoCamera;
+	public Transform target;
 	public Text text;
-
+	
 	private Texture2D colorMap;
 	private float timer;
-	
-	void Awake()
+	private bool measureFingerTip;
+	private CalibrationFile file;
+
+	void Start()
 	{
 		Cursor.visible = false;
 		timer = 0;
+		measureFingerTip = false;
+		file = new CalibrationFile ();
+		RandomizeTarget ();
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
+		if (Input.GetKeyDown (KeyCode.A)) {
+			measureFingerTip = true;
+		}
+
 		//we update the depthmap 30fps
 		if(timer >= 0.0333f)
 		{
@@ -68,11 +80,21 @@ public class Calibration : MonoBehaviour
 			depthMesh.SetTexture(colorMap);
 
 			text.text = depthMesh.fingerTip.localPosition.z.ToString();
+
+			if(measureFingerTip) {
+				measureFingerTip = false;
+				file.AddFingerTip(target.position, depthMesh.fingerTip.position);
+				RandomizeTarget();
+			}
 		}
 		else
 		{
 			timer += Time.deltaTime;
 		}
+	}
+
+	void OnApplicationQuit() {
+		file.Close ();
 	}
 
 	private void FilterFloatMat(Mat mat, out int fingerI, out int fingerJ)
@@ -100,6 +122,20 @@ public class Calibration : MonoBehaviour
 					fingerI = i;
 					fingerJ = j;
 				}
+			}
+		}
+	}
+
+	private void RandomizeTarget() {
+		System.Random random = new System.Random ();
+		while (true) {
+			float x = ((float)random.NextDouble () - 0.5f) * 0.4f;
+			float y = ((float)random.NextDouble () - 0.5f) * 0.4f;
+			float z = ((float)random.NextDouble ()) * 0.25f + 0.3f;
+			Vector3 v = new Vector3(x, y, z);
+			if(stereoCamera.IsInside(v)) {
+				target.position = v;
+				break;
 			}
 		}
 	}
