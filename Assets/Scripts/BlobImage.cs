@@ -31,17 +31,22 @@ public class BlobImage : MonoBehaviour
 		}
 		
 		CvBlobs blobs = new CvBlobs (byteMat);
-		blobs.FilterByArea (blobs.LargestBlob ().Area / 2, int.MaxValue);
 
 		Mat blobMat = new Mat (height, width, MatType.CV_8UC3);
 		MatOfByte3 blobMatByte = new MatOfByte3 (blobMat);
 		var blobIndexer = blobMatByte.GetIndexer ();
-		
+
 		for (int i = 0; i < width; ++i) {
 			for (int j = 0; j < height; ++j) {
 				blobIndexer[j, i] = new Vec3b(0, 0, 0);
 			}
 		}
+		
+		if (blobs.Count == 0) {
+			return blobMat;
+		}
+
+		blobs.FilterByArea (blobs.LargestBlob ().Area / 2, int.MaxValue);
 		
 		//Colors the blob by (127, 127, 255)
 		blobs.RenderBlobs (blobMat, blobMat, RenderBlobsMode.Color);

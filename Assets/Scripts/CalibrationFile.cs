@@ -37,7 +37,8 @@ public class CalibrationFile {
 	}
 
 	public void AddFingerTip(Vector3 target, Vector3 fingerTip) {
-		fingerTips.Add (target);
+		targets.Add (target);
+		fingerTips.Add (fingerTip);
 		sw.Write (string.Format ("{0} {1} {2} {3} {4} {5}\n", target.x, target.y, target.z,
 		                         fingerTip.x, fingerTip.y, fingerTip.z));
 	}

@@ -62,7 +62,7 @@ public class Optimization : MonoBehaviour {
 			Vector3 t;
 			Optimizer.Optimize(fingerTips, targets, out s, out q, out t);
 
-			fingerTipRoot.transform.localPosition = t;
+			fingerTipRoot.transform.localPosition = t * s;
 			fingerTipRoot.transform.localRotation = q;
 			fingerTipRoot.transform.localScale = new Vector3(s, s, s);
 			

@@ -11,6 +11,7 @@ public class Calibration : MonoBehaviour
 	public DepthImage depthImage;
 	public BlobImage blobImage;
 	public DepthMesh depthMesh;
+	public Transform depthCameraRig;
 	public StereoCamera stereoCamera;
 	public Transform target;
 	public Text text;
@@ -34,6 +35,18 @@ public class Calibration : MonoBehaviour
 	{
 		if (Input.GetKeyDown (KeyCode.A)) {
 			measureFingerTip = true;
+		}
+		else if (Input.GetKeyDown (KeyCode.S)) {
+			float s;
+			Quaternion q;
+			Vector3 t;
+			Optimizer.Optimize (file.fingerTips, file.targets, out s, out q, out t);
+			stereoCamera.ipd = stereoCamera.ipd * s;
+			depthCameraRig.localPosition = t;
+			depthCameraRig.localRotation = q;
+		}
+		else if (Input.GetKeyDown (KeyCode.D)) {
+			depthMesh.gameObject.SetActive(!depthMesh.gameObject.activeSelf);
 		}
 
 		//we update the depthmap 30fps
@@ -113,7 +126,7 @@ public class Calibration : MonoBehaviour
 			for(int j = 0; j < height; ++j)
 			{
 				float value = indexer[j, i];
-				if(value < 0.25f || value > 0.6f)
+				if(value < 0.25f || value > 0.65f)
 				{
 					indexer[j, i] = 0.0f;
 				}
@@ -131,7 +144,7 @@ public class Calibration : MonoBehaviour
 		while (true) {
 			float x = ((float)random.NextDouble () - 0.5f) * 0.4f;
 			float y = ((float)random.NextDouble () - 0.5f) * 0.4f;
-			float z = ((float)random.NextDouble ()) * 0.25f + 0.3f;
+			float z = ((float)random.NextDouble ()) * 0.25f + 0.35f;
 			Vector3 v = new Vector3(x, y, z);
 			if(stereoCamera.IsInside(v)) {
 				target.position = v;

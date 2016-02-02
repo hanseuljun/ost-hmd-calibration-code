@@ -7,6 +7,7 @@ public class StereoCamera : MonoBehaviour {
 	public Camera rightCamera;
 	public float ipd;
 	public float aspectRatio;
+	public Color background;
 
 	void Awake () {
 		ApplyParameters ();
@@ -21,6 +22,8 @@ public class StereoCamera : MonoBehaviour {
 		rightCamera.transform.localPosition = new Vector3(0.5f * ipd, 0.0f, 0.0f);
 		leftCamera.aspect = aspectRatio;
 		rightCamera.aspect = aspectRatio;
+		leftCamera.backgroundColor = background;
+		rightCamera.backgroundColor = background;
 	}
 
 	public bool IsInside(Vector3 v) {
