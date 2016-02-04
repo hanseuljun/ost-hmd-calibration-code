@@ -3,15 +3,22 @@ using System.Collections;
 using OpenCvSharp;
 using OpenCvSharp.Blob;
 
-public class BlobImage : MonoBehaviour
-{	
+public class BlobImage : MonoBehaviour {	
 	public IisuInputProvider IisuInput;
-	
-	public Texture2D BlobMap { get; private set; }
-	
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
+	private Texture2D blobMap;
+	
+	void OnGUI() {
+		if (blobMap != null) {
+			GUI.DrawTexture (new UnityEngine.Rect (Screen.width * NormalizedXCoordinate,
+			                                     Screen.height * NormalizedYCoordinate,
+			                                     Screen.width * NormalizedWidth,
+			                                     Screen.width * NormalizedWidth * (float)blobMap.height / (float)blobMap.width),
+			                					 blobMap);
+		}
+	}
 
 	public static Mat ConvertDepthMat(Mat mat) {
 		int width = mat.Width;
@@ -54,8 +61,7 @@ public class BlobImage : MonoBehaviour
 		return blobMat;
 	}
 	
-	public void SetBlobMat(Mat mat)
-	{
+	public void SetBlobMat(Mat mat) {
 		int width = mat.Width;
 		int height = mat.Height;
 
@@ -63,8 +69,8 @@ public class BlobImage : MonoBehaviour
 		var blobIndexer = blobMatByte.GetIndexer ();
 
 		if (enabled) {
-			if (BlobMap == null) {
-				BlobMap = new Texture2D (width, height, TextureFormat.ARGB32, false);
+			if (blobMap == null) {
+				blobMap = new Texture2D (width, height, TextureFormat.ARGB32, false);
 			}
 
 			Color[] pixels = new Color[width * height];
@@ -75,21 +81,8 @@ public class BlobImage : MonoBehaviour
 				}
 			}
 
-			BlobMap.SetPixels (pixels);
-			BlobMap.Apply ();
-		}
-	}
-	
-	void OnGUI()
-	{
-		if (BlobMap != null)
-		{
-			float heightWidthRatio = (float) BlobMap.height / (float) BlobMap.width;
-			
-			GUI.DrawTexture(new UnityEngine.Rect(Screen.width * NormalizedXCoordinate,
-			                                     Screen.height * NormalizedYCoordinate,
-			                                     Screen.width * NormalizedWidth,
-			                                     Screen.width * NormalizedWidth * heightWidthRatio), BlobMap);
+			blobMap.SetPixels (pixels);
+			blobMap.Apply ();
 		}
 	}
 }

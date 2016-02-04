@@ -127,7 +127,7 @@ public class DepthMesh : MonoBehaviour {
 		}
 
 		Vector3 fingerTipPosition = new Vector3 (0.0f, float.NegativeInfinity, 0.0f);
-		foreach (var vertex in vertices) {
+		foreach (var vertex in mesh.vertices) {
 			if((vertex.y - vertex.z * 0.5f) > (fingerTipPosition.y - fingerTipPosition.z * 0.5f)) {
 				fingerTipPosition = vertex;
 			}

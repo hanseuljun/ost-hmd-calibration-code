@@ -13,7 +13,6 @@ public class IisuInputProvider : MonoBehaviour
 {
 	//the IisuUnityBehaviour object handles the iisu device, including its update thread, and disposing.
 	private IisuUnityBehaviour iisuUnity;
-	
 	private IDataHandle<Iisu.Data.IImageData> colorImage;
 	private IParameterHandle<int> colorWidth;
 	private IParameterHandle<int> colorHeight;
@@ -21,14 +20,13 @@ public class IisuInputProvider : MonoBehaviour
 	private IParameterHandle<int> depthWidth;
 	private IParameterHandle<int> depthHeight;
 	
-	private List<uint> _poseIDsDetected;
-	
 	void Awake ()
 	{
 		//this has to be done first. Inside the IisuUnityBehaviour object, iisu is initialized, and the update thread for the current device (camera, movie) is started
 		iisuUnity = GetComponent<IisuUnityBehaviour> ();
 		iisuUnity.Initialize ();
 		
+		//register iisu data needed to display the colorimage
 		colorImage = iisuUnity.Device.RegisterDataHandle<Iisu.Data.IImageData> ("SOURCE.CAMERA.COLOR.Image");
 		colorWidth = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Width");
 		colorHeight = iisuUnity.Device.RegisterParameterHandle<int> ("SOURCE.CAMERA.COLOR.Height");
