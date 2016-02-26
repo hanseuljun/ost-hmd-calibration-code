@@ -86,7 +86,10 @@ public class ImageConverter
 		for (int i = 0; i < width; ++i) {
 			for (int j = 0; j < height; ++j) {
 				Vec3b color = indexer [j, i];
-				pixels [i + (height - 1 - j) * width] = new Color32 (color.Item0, color.Item1, color.Item2, (byte)255);
+				pixels [i + (height - 1 - j) * width] = new Color32 (color.Item0,
+				                                                     color.Item1, 
+				                                                     color.Item2, 
+				                                                     (byte)255);
 			}
 		}
 		

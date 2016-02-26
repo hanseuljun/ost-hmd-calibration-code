@@ -8,13 +8,45 @@ public class DepthMesh : MonoBehaviour {
 	public MeshFilter filter;
 	public MeshRenderer meshRenderer;
 	public Transform fingerTip;
+	public Shader vertexColorShader;
 
-	void Update () {
+	public MeshFilter Save() {
+		print ("Save()");
+		GameObject go = new GameObject ();
+		MeshFilter savedFilter = go.AddComponent<MeshFilter> ();
+		MeshRenderer savedMeshRenderer = go.AddComponent<MeshRenderer> ();
+		savedFilter.mesh = filter.mesh;
+		savedMeshRenderer.material = new Material (vertexColorShader);
+		
+		Texture2D texture2D = meshRenderer.material.mainTexture as Texture2D;
+
+		Vector2[] uvs = savedFilter.mesh.uv;
+		Color[] colors = new Color[uvs.Length];
+
+		for (int i = 0; i < uvs.Length; ++i) {
+			float x = uvs[i].x * texture2D.width;
+			float y = uvs[i].y * texture2D.height;
+
+			colors[i] = texture2D.GetPixel((int) x, (int) y);
+		}
+
+		savedFilter.sharedMesh.colors = colors;
+
+		go.transform.parent = transform.parent;
+		go.transform.localPosition = Vector3.zero;
+		go.transform.localRotation = Quaternion.identity;
+		go.transform.localScale = Vector3.one;
+
+		return savedFilter;
 	}
 
 	public void SetFloatMat(Mat depthMat, Mat blobMat) {
-		int width = depthMat.Width;
-		int height = depthMat.Height;
+		SetFloatMat (depthMat, null, blobMat);
+	}
+
+	public void SetFloatMat(Mat depthMat, Mat skinMat, Mat blobMat) {
+		int depthWidth = depthMat.Width;
+		int depthHeight = depthMat.Height;
 
 		MatOfFloat matFloat = new MatOfFloat (depthMat);
 		var indexer = matFloat.GetIndexer ();
@@ -25,25 +57,43 @@ public class DepthMesh : MonoBehaviour {
 		CameraParameters depthCamera = CameraParameters.CreateMetaDepth ();
 		CameraParameters colorCamera = CameraParameters.CreateMetaColor ();
 
-		if (width != depthCamera.Width || height != depthCamera.Height) {
+		if (depthWidth != depthCamera.Width || depthHeight != depthCamera.Height) {
 			Debug.LogError("Wrong Parameters!");
 		}
 		
-		if (width != blobMat.Width || height != blobMat.Height) {
+		if (depthWidth != blobMat.Width || depthHeight != blobMat.Height) {
 			Debug.LogError("Wrong Parameters!");
+		}
+		
+		int colorWidth = 0;
+		int colorHeight = 0;
+		
+		MatOfByte matSkin = null;
+		MatIndexer<byte> skinIndexer = null;
+		if (skinMat != null) {
+			colorWidth = skinMat.Width;
+			colorHeight = skinMat.Height;
+			matSkin = new MatOfByte (skinMat);
+			skinIndexer = matSkin.GetIndexer();
+
+			print ("skinIndexer[200, 200]: " + skinIndexer[200, 200]);
+			
+			if (colorWidth != colorCamera.Width || colorHeight != colorCamera.Height) {
+				Debug.LogError("Wrong Parameters!");
+			}
 		}
 
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uv = new List<Vector2> ();
-		int[] vertexMap = new int[width * height];
-		for (int i = 0; i < width; ++i) {
-			for (int j = 0; j < height; ++j) {
-				vertexMap[i + j * width] = -1;
+		int[] vertexMap = new int[depthWidth * depthHeight];
+		for (int i = 0; i < depthWidth; ++i) {
+			for (int j = 0; j < depthHeight; ++j) {
+				vertexMap[i + j * depthWidth] = -1;
 
 				float depth = indexer[j, i];
 				if(depth > 0.0f && blobIndexer[j, i].Item0 != 0 && vertices.Count < 65000) {
 					//Pixels ([0, depth width] x [0, depth height]) to Meters
-					Vector3 depthVertex = DepthPixelToVertex(i, height - 1 - j, depth, depthCamera);
+					Vector3 depthVertex = DepthPixelToVertex(i, depthHeight - 1 - j, depth, depthCamera);
 					
 					//Meters to Meters
 					Vector3 colorVertex = DepthVertexToColorVertex(depthVertex);
@@ -53,13 +103,35 @@ public class DepthMesh : MonoBehaviour {
 
 					//Meters to Pixels ([0, color width] x [0, color height])
 					ColorVertexToPixel(colorVertex, colorCamera, out u, out v);
+					
+					if(skinIndexer != null) {
+						int skinU = Mathf.FloorToInt(u);
+						int skinV = colorHeight - 1 - Mathf.FloorToInt(v);
+						if(skinU < 0) {
+							skinU = 0;
+						}
+						else if(skinU >= colorWidth) {
+							skinU = colorWidth - 1;
+						}
+
+						if(skinV < 0) {
+							skinV = 0;
+						}
+						else if(skinV >= colorHeight) {
+							skinV = colorHeight - 1;
+						}
+
+						if(skinIndexer[skinV, skinU] == 0) {
+							continue;
+						}
+					}
 
 					//Changing scale from pixels to [-1, 1]
 					u /= colorCamera.Width;
 					v /= colorCamera.Height;
 
 					if(u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f) {
-						vertexMap[i + j * width] = vertices.Count;
+						vertexMap[i + j * depthWidth] = vertices.Count;
 						vertices.Add(depthVertex);
 						uv.Add(new Vector2(u, v));
 					}
@@ -67,64 +139,62 @@ public class DepthMesh : MonoBehaviour {
 			}
 		}
 
-		List<int> indices = new List<int>();
-		for (int i = 0; i < width - 1; ++i) {
-			for (int j = 0; j < height - 1; ++j) {
-				int vertexIndex = i + j * width;
+		List<int> triangles = new List<int>();
+		for (int i = 0; i < depthWidth - 1; ++i) {
+			for (int j = 0; j < depthHeight - 1; ++j) {
+				int vertexIndex = i + j * depthWidth;
 
 				int index0 = vertexMap[vertexIndex];
-				int index1 = vertexMap[vertexIndex + width];
+				int index1 = vertexMap[vertexIndex + depthWidth];
 				int index2 = vertexMap[vertexIndex + 1];
-				int index3 = vertexMap[vertexIndex + width + 1];
+				int index3 = vertexMap[vertexIndex + depthWidth + 1];
 
 				int validCount = (index0 != -1 ? 1 : 0) + (index1 != -1 ? 1 : 0)
 					+ (index2 != -1 ? 1 : 0) + (index3 != -1 ? 1 : 0);
 				
 				if(validCount == 4) {
-					indices.Add(index0);
-					indices.Add(index2);
-					indices.Add(index1);
+					triangles.Add(index0);
+					triangles.Add(index2);
+					triangles.Add(index1);
 
-					indices.Add(index2);
-					indices.Add(index3);
-					indices.Add(index1);
+					triangles.Add(index2);
+					triangles.Add(index3);
+					triangles.Add(index1);
 				}
 				else if(validCount == 3) {
 					if(index0 == -1) {
-						indices.Add(index2);
-						indices.Add(index3);
-						indices.Add(index1);
+						triangles.Add(index2);
+						triangles.Add(index3);
+						triangles.Add(index1);
 					}
 					else if(index1 == -1) {
-						indices.Add(index0);
-						indices.Add(index3);
-						indices.Add(index2);
+						triangles.Add(index0);
+						triangles.Add(index3);
+						triangles.Add(index2);
 					}
 					else if(index2 == -1) {
-						indices.Add(index0);
-						indices.Add(index1);
-						indices.Add(index3);
+						triangles.Add(index0);
+						triangles.Add(index1);
+						triangles.Add(index3);
 					}
 					else {
-						indices.Add(index0);
-						indices.Add(index2);
-						indices.Add(index1);
+						triangles.Add(index0);
+						triangles.Add(index2);
+						triangles.Add(index1);
 					}
 				}
 			}
 		}
 
-		Mesh mesh = new Mesh ();
+		Mesh mesh = filter.sharedMesh;
+		if(mesh == null) {
+			mesh = new Mesh();
+			filter.mesh = mesh;
+		}
+		mesh.Clear ();
 		mesh.vertices = vertices.ToArray();
 		mesh.uv = uv.ToArray ();
-		mesh.SetIndices (indices.ToArray(), MeshTopology.Triangles, 0);
-
-		Mesh temp = filter.sharedMesh;
-		filter.mesh = mesh;
-
-		if (temp != null) {
-			Destroy(temp);
-		}
+		mesh.triangles = triangles.ToArray ();
 
 		Vector3 fingerTipPosition = new Vector3 (0.0f, float.NegativeInfinity, 0.0f);
 		foreach (var vertex in mesh.vertices) {
@@ -132,7 +202,7 @@ public class DepthMesh : MonoBehaviour {
 				fingerTipPosition = vertex;
 			}
 		}
-
+		
 		if (!float.IsNegativeInfinity (fingerTipPosition.y)) {
 			fingerTip.localPosition = fingerTipPosition;
 		}
@@ -197,7 +267,7 @@ public class DepthMesh : MonoBehaviour {
 		v = y * colorCamera.FY + colorCamera.CY;
 	}
 	
-	public void SetTexture(Texture texture) {
+	public void SetTexture(Texture2D texture) {
 		meshRenderer.material.mainTexture = texture;
 	}
 }

@@ -8,46 +8,63 @@ public class Calibration : MonoBehaviour {
 	public IisuInputProvider IisuInput;
 	public ColorImage colorImage;
 	public DepthImage depthImage;
+	public SkinImage skinImage;
 	public BlobImage blobImage;
 	public DepthMesh depthMesh;
 	public Transform depthCameraRig;
 	public StereoCamera stereoCamera;
 	public Transform target;
 	public Text text;
+	public byte skinThreshold;
 	
 	private Texture2D colorMap;
 	private float timer;
 	private bool measureFingerTip;
 	private CalibrationFile file;
 
+	private List<MeshFilter> savedMeshFilters;
+	private List<PointCloud> savedPointClouds;
+
 	void Start() {
 		Cursor.visible = false;
 		timer = 0;
 		measureFingerTip = false;
 		file = new CalibrationFile ();
+		savedMeshFilters = new List<MeshFilter> ();
+		savedPointClouds = new List<PointCloud> ();
 		RandomizeTarget ();
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		print ("Update()");
+
 		if (Input.GetKeyDown (KeyCode.A)) {
 			measureFingerTip = true;
 		}
 		else if (Input.GetKeyDown (KeyCode.S)) {
 			float s;
-			Quaternion q;
+//			Quaternion q;
+			Quaternion q = Quaternion.identity;
 			Vector3 t;
-			Optimizer.Optimize (file.fingerTips, file.targets, out s, out q, out t);
+//			Optimizer.Optimize (file.fingerTips, file.targets, out s, out q, out t);
+			Optimizer.Optimize (file.fingerTips, file.targets, q, out s, out t);
+			
 //			stereoCamera.ipd = stereoCamera.ipd * s;
 //			depthCameraRig.localPosition = t;
 //			depthCameraRig.localRotation = q;
-			
+
 			depthCameraRig.localPosition = t * s;
 			depthCameraRig.localRotation = q;
-			depthCameraRig.localScale = new Vector3(s, s, s);
+			depthCameraRig.localScale = new Vector3 (s, s, s);
 		}
 		else if (Input.GetKeyDown (KeyCode.D)) {
 			depthMesh.gameObject.SetActive (!depthMesh.gameObject.activeSelf);
+		}
+		else if (Input.GetKeyDown (KeyCode.F)) {
+			MeshFilter savedMeshFilter = depthMesh.Save();
+			savedMeshFilters.Add(savedMeshFilter);
+			savedPointClouds.Add(new PointCloud(savedMeshFilter.mesh));
 		}
 
 		//we update the depthmap 30fps
@@ -71,6 +88,8 @@ public class Calibration : MonoBehaviour {
 
 			Mat depthMat = new Mat (depthHeight, depthWidth, MatType.CV_32F);
 			ImageConverter.GenerateDepthMat (IisuInput.DepthMap, ref depthMat);
+			
+			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
 
 			Mat bilateralMat = depthMat.BilateralFilter (5, 5.0, 5.0, BorderTypes.Constant);
 			depthMat = bilateralMat;
@@ -78,18 +97,22 @@ public class Calibration : MonoBehaviour {
 			int fingerI;
 			int fingerJ;
 			FilterFloatMat (depthMat, out fingerI, out fingerJ);
-			
+
 			Mat blobMat = BlobImage.ConvertDepthMat (depthMat);
 
 			if (depthImage.enabled) {
 				depthImage.UpdateFloatMat (depthMat, fingerI, fingerJ);
 			}
 
+			if (skinImage.enabled) {
+				skinImage.SetSkinMat (skinMat);
+			}
+
 			if (blobImage.enabled) {
 				blobImage.SetBlobMat (blobMat);
 			}
 
-			depthMesh.SetFloatMat (depthMat, blobMat);
+			depthMesh.SetFloatMat (depthMat, skinMat, blobMat);
 			depthMesh.SetTexture (colorMap);
 
 			text.text = depthMesh.fingerTip.localPosition.z.ToString ();

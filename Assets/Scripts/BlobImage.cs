@@ -4,7 +4,6 @@ using OpenCvSharp;
 using OpenCvSharp.Blob;
 
 public class BlobImage : MonoBehaviour {	
-	public IisuInputProvider IisuInput;
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
@@ -62,27 +61,29 @@ public class BlobImage : MonoBehaviour {
 	}
 	
 	public void SetBlobMat(Mat mat) {
+		if (!enabled) {
+			return;
+		}
+
 		int width = mat.Width;
 		int height = mat.Height;
 
 		MatOfByte3 blobMatByte = new MatOfByte3 (mat);
 		var blobIndexer = blobMatByte.GetIndexer ();
 
-		if (enabled) {
-			if (blobMap == null) {
-				blobMap = new Texture2D (width, height, TextureFormat.ARGB32, false);
-			}
-
-			Color[] pixels = new Color[width * height];
-		
-			for (int i = 0; i < width; ++i) {
-				for (int j = 0; j < height; ++j) {
-					pixels [i + (height - 1 - j) * width] = blobIndexer [j, i].Item0 != 0 ? Color.white : Color.black;
-				}
-			}
-
-			blobMap.SetPixels (pixels);
-			blobMap.Apply ();
+		if (blobMap == null) {
+			blobMap = new Texture2D (width, height, TextureFormat.ARGB32, false);
 		}
+
+		Color[] pixels = new Color[width * height];
+	
+		for (int i = 0; i < width; ++i) {
+			for (int j = 0; j < height; ++j) {
+				pixels [i + (height - 1 - j) * width] = blobIndexer [j, i].Item0 != 0 ? Color.white : Color.black;
+			}
+		}
+
+		blobMap.SetPixels (pixels);
+		blobMap.Apply ();
 	}
 }

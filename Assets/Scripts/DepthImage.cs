@@ -3,7 +3,6 @@ using System.Collections;
 using OpenCvSharp;
 
 public class DepthImage : MonoBehaviour {
-	public IisuInputProvider IisuInput;
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;

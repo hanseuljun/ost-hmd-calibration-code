@@ -8,11 +8,13 @@ public class ButtonSimulation : MonoBehaviour {
 	public DepthMesh depthMesh;
 	public Transform depthCameraRig;
 	public StereoCamera stereoCamera;
-	
+
+	private GestureDetector detector;
 	private Texture2D colorMap;
 	private float timer;
 
 	void Start() {
+		detector = new GestureDetector ();
 		Cursor.visible = false;
 		timer = 0;
 	}
@@ -52,6 +54,10 @@ public class ButtonSimulation : MonoBehaviour {
 			
 			depthMesh.SetFloatMat (depthMat, blobMat);
 			depthMesh.SetTexture (colorMap);
+
+			Vector3 fingerTipPosition = depthMesh.fingerTip.position;
+			detector.Update(fingerTipPosition);
+			detector.GetGesture();
 		}
 		else {
 			timer += Time.deltaTime;

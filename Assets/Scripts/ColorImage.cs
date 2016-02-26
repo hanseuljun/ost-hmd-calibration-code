@@ -3,7 +3,6 @@ using System.Collections;
 using OpenCvSharp;
 
 public class ColorImage : MonoBehaviour {
-	public IisuInputProvider IisuInput;
 	public float NormalizedXCoordinate;
 	public float NormalizedYCoordinate;
 	public float NormalizedWidth;
@@ -14,7 +13,7 @@ public class ColorImage : MonoBehaviour {
 			GUI.DrawTexture (new UnityEngine.Rect (Screen.width * NormalizedXCoordinate,
 			                                     Screen.height * NormalizedYCoordinate,
 			                                     Screen.width * NormalizedWidth,
-			                                     Screen.width * (float)colorMap.height / (float)colorMap.width),
+			                                     Screen.width * NormalizedWidth * (float)colorMap.height / (float)colorMap.width),
 			                					 colorMap);
 		}
 	}
