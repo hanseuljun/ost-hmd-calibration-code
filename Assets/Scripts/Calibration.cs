@@ -65,6 +65,15 @@ public class Calibration : MonoBehaviour {
 			MeshFilter savedMeshFilter = depthMesh.Save();
 			savedMeshFilters.Add(savedMeshFilter);
 			savedPointClouds.Add(new PointCloud(savedMeshFilter.mesh));
+
+			if(savedPointClouds.Count > 1) {
+				Vector3 translation;
+				Quaternion rotation;
+				ICP.Solve(savedPointClouds[savedPointClouds.Count - 1], savedPointClouds[0], 
+				          out translation, out rotation);
+				savedMeshFilter.transform.localPosition = translation;
+				savedMeshFilter.transform.localRotation = rotation;
+			}
 		}
 
 		//we update the depthmap 30fps

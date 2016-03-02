@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 public class ICP {
 
-	public void Solve(PointCloud source, PointCloud target) {
+	public static void Solve(PointCloud source, PointCloud target, out Vector3 translation, out Quaternion rotation) {
 		int sourceCount = source.Points.Count;
 		int targetCount = target.Points.Count;
 	
-		Vector3 translation = Vector3.zero;
-		Quaternion rotation = Quaternion.identity;
+		translation = Vector3.zero;
+		rotation = Quaternion.identity;
 
-		for (int i = 0; i < 1; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			List<Vector3> transformedSourcePoints = new List<Vector3>();
 			List<Vector3> closestTargetPoints = new List<Vector3>();
 
@@ -103,8 +103,9 @@ public class ICP {
 
 			double[] d = new double[0];
 			double[,] v = new double[0, 0];
-			alglib.evd.smatrixevd(Q, 4, 0, false, ref d, ref v);
+			alglib.evd.smatrixevd(Q, 4, 1, false, ref d, ref v);
 
+			//TODO: fix this
 			rotation = new Quaternion((float) v[0, 1], (float) v[0, 2], (float) v[0, 3], (float) v[0, 0]);
 			translation = closestTargetCenter - rotation * transformedSourceCenter;
 		}
