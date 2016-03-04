@@ -100,8 +100,9 @@ public class Calibration : MonoBehaviour {
 			
 			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
 
-			Mat bilateralMat = depthMat.BilateralFilter (5, 5.0, 5.0, BorderTypes.Constant);
-			depthMat = bilateralMat;
+			//Currently related with crashes
+			//Mat bilateralMat = depthMat.BilateralFilter (5, 5.0, 5.0, BorderTypes.Constant);
+			//depthMat = bilateralMat;
 
 			int fingerI;
 			int fingerJ;

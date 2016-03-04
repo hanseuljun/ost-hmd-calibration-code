@@ -11,13 +11,9 @@ public class ICP {
 		translation = Vector3.zero;
 		rotation = Quaternion.identity;
 
-		for (int i = 0; i < 10; ++i) {
+		for (int i = 0; i < 1; ++i) {
 			List<Vector3> transformedSourcePoints = new List<Vector3>();
 			List<Vector3> closestTargetPoints = new List<Vector3>();
-
-			for(int j = 0; j < sourceCount; ++j) {
-				transformedSourcePoints.Add(rotation * source.Points[i] + translation);
-			}
 
 			Vector3 transformedSourceCenter = Vector3.zero;
 			Vector3 closestTargetCenter = Vector3.zero;
@@ -26,7 +22,7 @@ public class ICP {
 				int closestPoint = -1;
 				float minDistance = float.MaxValue;
 
-				Vector3 sourcePoint = transformedSourcePoints [j];
+				Vector3 sourcePoint = rotation * source.Points[j] + translation;
 
 				for (int k = 0; k < targetCount; ++k) {
 					float distance = (sourcePoint - target.Points [k]).magnitude;
@@ -36,6 +32,11 @@ public class ICP {
 					}
 				}
 
+				if(j % 100 == 0) {
+					Debug.LogFormat ("minDistance[{0}]: {1}", j, minDistance);
+				}
+				
+				transformedSourcePoints.Add (sourcePoint);
 				closestTargetPoints.Add (target.Points[closestPoint]);
 			}
 
@@ -105,9 +106,15 @@ public class ICP {
 			double[,] v = new double[0, 0];
 			alglib.evd.smatrixevd(Q, 4, 1, false, ref d, ref v);
 
+			//for(int j = 0; j < 4; ++j) {
+			//	Debug.LogFormat("d[{0}]: {1}:", j, d[j]);
+			//}
+
 			//TODO: fix this
-			rotation = new Quaternion((float) v[0, 1], (float) v[0, 2], (float) v[0, 3], (float) v[0, 0]);
-			translation = closestTargetCenter - rotation * transformedSourceCenter;
+			Quaternion newRotation = new Quaternion((float) v[3, 1], (float) v[3, 2], (float) v[3, 3], (float) v[3, 0]);
+			Vector3 newTraslation = closestTargetCenter - newRotation * transformedSourceCenter;
+			translation = rotation * newTraslation + translation;
+			rotation = newRotation * rotation;
 		}
 	}
 }

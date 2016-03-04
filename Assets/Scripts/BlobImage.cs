@@ -19,7 +19,54 @@ public class BlobImage : MonoBehaviour {
 		}
 	}
 
+	public static Mat FilterDepthMat(Mat mat) {
+		int width = mat.Width;
+		int height = mat.Height;
+
+		var matFloat = new MatOfFloat (mat);
+		var indexer = matFloat.GetIndexer ();
+
+		Mat filteredMat = new Mat (height, width, MatType.CV_32F);
+		var filteredMatFloat = new MatOfFloat (filteredMat);
+		var filteredIndexer = filteredMatFloat.GetIndexer ();
+
+		for (int i = 0; i < width; ++i) {
+			for (int j = 0; j < height; ++j) {
+				int count = 0;
+				if((i > 0) && (Mathf.Abs(indexer[j, i] - indexer[j, i - 1]) < 0.01f))
+				{
+					++count;
+				}
+				if((i < width - 1) && (Mathf.Abs(indexer[j, i] - indexer[j, i + 1]) < 0.01f))
+				{
+					++count;
+				}
+				if((j > 0) && (Mathf.Abs(indexer[j, i] - indexer[j - 1, i]) < 0.01f))
+				{
+					++count;
+				}
+				if((j < height - 1) && (Mathf.Abs(indexer[j, i] - indexer[j + 1, i]) < 0.01f))
+				{
+					++count;
+				}
+
+				if(count > 1)
+				{
+					filteredIndexer[j, i] = indexer[j, i];
+				}
+				else
+				{
+					filteredIndexer[j, i] = 0.0f;
+				}
+			}
+		}
+
+		return filteredMat;
+	}
+
 	public static Mat ConvertDepthMat(Mat mat) {
+		mat = FilterDepthMat (mat);
+
 		int width = mat.Width;
 		int height = mat.Height;
 		
