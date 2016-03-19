@@ -9,8 +9,6 @@ public class Calibration : MonoBehaviour {
 	public IisuInputProvider IisuInput;
 	public ColorImage colorImage;
 	public DepthImage depthImage;
-	public SkinImage skinImage;
-	public BlobImage blobImage;
 	public DepthMesh depthMesh;
 	public Transform depthCameraRig;
 	public StereoCamera stereoCamera;
@@ -25,18 +23,12 @@ public class Calibration : MonoBehaviour {
 	private List<Vector3> targetPositions;
 	private List<Vector3> fingerTipPositions;
 
-	private List<MeshFilter> savedMeshFilters;
-	private List<PointCloud> savedPointClouds;
-
 	void Start() {
 		Cursor.visible = false;
 		timer = 0;
 		measureFingerTip = false;
-		//file = new CalibrationFile ();
 		targetPositions = new List<Vector3> ();
 		fingerTipPositions = new List<Vector3> ();
-		savedMeshFilters = new List<MeshFilter> ();
-		savedPointClouds = new List<PointCloud> ();
 		RandomizeTarget ();
 		ResetDepthCameraRig();
 	}
@@ -49,7 +41,6 @@ public class Calibration : MonoBehaviour {
 			lowerText.enabled = textEnabled;
 		}
 		else if (Input.GetKeyDown (KeyCode.A)) {
-			print ("measureFingerTip");
 			measureFingerTip = true;
 		}
 		else if (Input.GetKeyDown (KeyCode.S)) {
@@ -61,18 +52,7 @@ public class Calibration : MonoBehaviour {
 				Optimizer.Optimize (fingerTipPositions, targetPositions, out s, out q, out t);
 				
 				t = t * s;
-				
-				float s0 = depthCameraRig.localScale.x;
-				Quaternion q0 = depthCameraRig.localRotation;
-				Vector3 t0 = depthCameraRig.localPosition;
 
-				float newS = s * s0;
-				Quaternion newQ = q * q0;
-				Vector3 newT = s * (q * t0) + t;
-
-//				depthCameraRig.localPosition = newT;
-//				depthCameraRig.localRotation = newQ;
-//				depthCameraRig.localScale = Vector3.one * newS;
 				depthCameraRig.localPosition = t;
 				depthCameraRig.localRotation = q;
 				depthCameraRig.localScale = Vector3.one * s;
@@ -87,16 +67,7 @@ public class Calibration : MonoBehaviour {
 				Optimizer.Optimize (fingerTipPositions, targetPositions, depthCameraRig.localRotation, out s, out t);
 				
 				t = t * s;
-				
-				float s0 = depthCameraRig.localScale.x;
-				Quaternion q0 = depthCameraRig.localRotation;
-				Vector3 t0 = depthCameraRig.localPosition;
-				
-				float newS = s * s0;
-				Vector3 newT = s * t0 + t;
-				
-//				depthCameraRig.localPosition = newT;
-//				depthCameraRig.localScale = Vector3.one * newS;
+
 				depthCameraRig.localPosition = t;
 				depthCameraRig.localScale = Vector3.one * s;
 				targetPositions.Clear();
@@ -149,26 +120,14 @@ public class Calibration : MonoBehaviour {
 			handBlobMat = closeMat;
 			
 			MatOfFloat handMat = HandExtractor.GenerateHandMat (depthMat, handBlobMat, handBlob);
-			
-//			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
 
 			int fingerI;
 			int fingerJ;
 			FilterFloatMat (depthMat, out fingerI, out fingerJ);
 
-//			Mat blobMat = BlobImage.ConvertDepthMat (depthMat);
-
 			if (depthImage.enabled) {
 				depthImage.UpdateFloatMat (depthMat, fingerI, fingerJ);
 			}
-
-//			if (skinImage.enabled) {
-//				skinImage.SetSkinMat (skinMat);
-//			}
-
-//			if (blobImage.enabled) {
-//				blobImage.SetBlobMat (blobMat);
-//			}
 
 			depthMesh.SetFloatMat (handMat);
 			depthMesh.SetTexture (colorMap);
@@ -219,12 +178,17 @@ public class Calibration : MonoBehaviour {
 	}
 
 	private void RandomizeTarget() {
-		System.Random random = new System.Random ();
+		var random = new System.Random ();
 		while (true) {
-			float x = ((float)random.NextDouble () - 0.5f) * 0.4f;
-			float y = ((float)random.NextDouble () - 0.5f) * 0.4f;
-			float z = ((float)random.NextDouble ()) * 0.25f + 0.35f;
-			Vector3 v = new Vector3(x, y, z);
+//			float x = ((float)random.NextDouble () - 0.5f) * 0.4f;
+//			float y = ((float)random.NextDouble () - 0.5f) * 0.4f;
+//			float z = ((float)random.NextDouble ()) * 0.25f + 0.35f;
+			float x = GetRandomInInterval(random, -0.2f, 0.2f);
+			float y = GetRandomInInterval(random, -0.2f, 0.2f);
+			float z = GetRandomInInterval(random, 0.35f, 0.6f);
+			Vector3 v = new Vector3(GetRandomInInterval(random, -0.2f, 0.2f),
+			                        GetRandomInInterval(random, -0.2f, 0.2f),
+			                        GetRandomInInterval(random, 0.35f, 0.6f));
 			if(stereoCamera.IsInside(v)) {
 				target.position = v;
 				break;
@@ -233,8 +197,18 @@ public class Calibration : MonoBehaviour {
 	}
 
 	private void ResetDepthCameraRig() {
-		depthCameraRig.localPosition = new Vector3(0.0f, 0.02f, 0.05f);
-		depthCameraRig.localRotation = Quaternion.Euler (0.0f, 0.0f, 10.0f);
-		depthCameraRig.localScale = Vector3.one * 1.1f;
+		var random = new System.Random ();
+		depthCameraRig.localPosition = new Vector3(GetRandomInInterval (random, -0.03f, 0.03f),
+		                                           GetRandomInInterval (random, -0.03f, 0.03f),
+		                                           GetRandomInInterval (random, -0.03f, 0.03f));
+		depthCameraRig.localRotation = Quaternion.Euler(GetRandomInInterval (random, -10.0f, 10.0f),
+			                                            GetRandomInInterval (random, -10.0f, 10.0f),
+			                                            GetRandomInInterval (random, -10.0f, 10.0f));
+		depthCameraRig.localScale = Vector3.one * GetRandomInInterval (random, 0.8f, 1.2f);
+	}
+
+	private float GetRandomInInterval(System.Random random, float begin, float end) {
+		float f = (float) random.NextDouble ();
+		return f * (end - begin) + begin;
 	}
 }
