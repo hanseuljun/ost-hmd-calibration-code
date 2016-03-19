@@ -11,7 +11,7 @@ public class ICP {
 		translation = Vector3.zero;
 		rotation = Quaternion.identity;
 
-		for (int i = 0; i < 1; ++i) {
+		for (int i = 0; i < 50; ++i) {
 			List<Vector3> transformedSourcePoints = new List<Vector3>();
 			List<Vector3> closestTargetPoints = new List<Vector3>();
 
@@ -111,9 +111,10 @@ public class ICP {
 			//}
 
 			//TODO: fix this
-			Quaternion newRotation = new Quaternion((float) v[3, 1], (float) v[3, 2], (float) v[3, 3], (float) v[3, 0]);
-			Vector3 newTraslation = closestTargetCenter - newRotation * transformedSourceCenter;
-			translation = rotation * newTraslation + translation;
+			//Quaternion newRotation = new Quaternion((float) v[3, 1], (float) v[3, 2], (float) v[3, 3], (float) v[3, 0]);
+			Quaternion newRotation = new Quaternion((float) v[1, 3], (float) v[2, 3], (float) v[3, 3], (float) v[0, 3]);
+			Vector3 newTranslation = closestTargetCenter - newRotation * transformedSourceCenter;
+			translation = newRotation * translation + newTranslation;
 			rotation = newRotation * rotation;
 		}
 	}

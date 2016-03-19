@@ -20,7 +20,8 @@ public class Calibration : MonoBehaviour {
 	private Texture2D colorMap;
 	private float timer;
 	private bool measureFingerTip;
-	private CalibrationFile file;
+	private List<Vector3> targetPositions;
+	private List<Vector3> fingerTipPositions;
 
 	private List<MeshFilter> savedMeshFilters;
 	private List<PointCloud> savedPointClouds;
@@ -29,7 +30,9 @@ public class Calibration : MonoBehaviour {
 		Cursor.visible = false;
 		timer = 0;
 		measureFingerTip = false;
-		file = new CalibrationFile ();
+		//file = new CalibrationFile ();
+		targetPositions = new List<Vector3> ();
+		fingerTipPositions = new List<Vector3> ();
 		savedMeshFilters = new List<MeshFilter> ();
 		savedPointClouds = new List<PointCloud> ();
 		RandomizeTarget ();
@@ -37,9 +40,8 @@ public class Calibration : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		print ("Update()");
-
 		if (Input.GetKeyDown (KeyCode.A)) {
+			print ("measureFingerTip");
 			measureFingerTip = true;
 		}
 		else if (Input.GetKeyDown (KeyCode.S)) {
@@ -48,7 +50,7 @@ public class Calibration : MonoBehaviour {
 			Quaternion q = Quaternion.identity;
 			Vector3 t;
 //			Optimizer.Optimize (file.fingerTips, file.targets, out s, out q, out t);
-			Optimizer.Optimize (file.fingerTips, file.targets, q, out s, out t);
+			Optimizer.Optimize (fingerTipPositions, targetPositions, q, out s, out t);
 			
 //			stereoCamera.ipd = stereoCamera.ipd * s;
 //			depthCameraRig.localPosition = t;
@@ -59,23 +61,22 @@ public class Calibration : MonoBehaviour {
 			depthCameraRig.localScale = new Vector3 (s, s, s);
 		}
 		else if (Input.GetKeyDown (KeyCode.D)) {
-			depthMesh.gameObject.SetActive (!depthMesh.gameObject.activeSelf);
+			depthCameraRig.localPosition = Vector3.zero;
+			depthCameraRig.localRotation = Quaternion.identity;
+			depthCameraRig.localScale = Vector3.one;
 		}
 		else if (Input.GetKeyDown (KeyCode.F)) {
-			MeshFilter savedMeshFilter = depthMesh.Save();
-			savedMeshFilters.Add(savedMeshFilter);
-			savedPointClouds.Add(new PointCloud(savedMeshFilter.mesh));
-
-			if(savedPointClouds.Count > 1) {
-				Vector3 translation;
-				Quaternion rotation;
-				ICP.Solve(savedPointClouds[savedPointClouds.Count - 1], savedPointClouds[0], 
-				          out translation, out rotation);
-				savedMeshFilter.transform.localPosition = translation;
-				savedMeshFilter.transform.localRotation = rotation;
+			bool active = !depthMesh.gameObject.activeSelf;
+			depthMesh.gameObject.SetActive (active);
+			Color background;
+			if(active) {
+				background = new Color(0.0f, 0.0f, 0.0f);
 			}
+			else {
+				background = new Color(0.5f, 0.5f, 1.0f);
+			}
+			stereoCamera.background = background;
 		}
-
 		//we update the depthmap 30fps
 		if (timer >= 0.0333f) {
 			timer = 0;
@@ -99,10 +100,6 @@ public class Calibration : MonoBehaviour {
 			ImageConverter.GenerateDepthMat (IisuInput.DepthMap, ref depthMat);
 			
 			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
-
-			//Currently related with crashes
-			//Mat bilateralMat = depthMat.BilateralFilter (5, 5.0, 5.0, BorderTypes.Constant);
-			//depthMat = bilateralMat;
 
 			int fingerI;
 			int fingerJ;
@@ -129,17 +126,14 @@ public class Calibration : MonoBehaviour {
 
 			if (measureFingerTip) {
 				measureFingerTip = false;
-				file.AddFingerTip (target.position, depthMesh.fingerTip.position);
+				targetPositions.Add(target.position);
+				fingerTipPositions.Add(depthMesh.fingerTip.position);
 				RandomizeTarget ();
 			}
 		}
 		else {
 			timer += Time.deltaTime;
 		}
-	}
-
-	void OnApplicationQuit() {
-		file.Close ();
 	}
 
 	private void FilterFloatMat(Mat mat, out int fingerI, out int fingerJ) {

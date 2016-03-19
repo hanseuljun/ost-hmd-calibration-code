@@ -65,7 +65,7 @@ public class BlobImage : MonoBehaviour {
 	}
 
 	public static Mat ConvertDepthMat(Mat mat) {
-		mat = FilterDepthMat (mat);
+		//mat = FilterDepthMat (mat);
 
 		int width = mat.Width;
 		int height = mat.Height;
