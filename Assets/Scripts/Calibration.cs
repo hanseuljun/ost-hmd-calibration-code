@@ -70,9 +70,12 @@ public class Calibration : MonoBehaviour {
 				Quaternion newQ = q * q0;
 				Vector3 newT = s * (q * t0) + t;
 
-				depthCameraRig.localPosition = newT;
-				depthCameraRig.localRotation = newQ;
-				depthCameraRig.localScale = Vector3.one * newS;
+//				depthCameraRig.localPosition = newT;
+//				depthCameraRig.localRotation = newQ;
+//				depthCameraRig.localScale = Vector3.one * newS;
+				depthCameraRig.localPosition = t;
+				depthCameraRig.localRotation = q;
+				depthCameraRig.localScale = Vector3.one * s;
 				targetPositions.Clear();
 				fingerTipPositions.Clear();
 			}
@@ -92,8 +95,10 @@ public class Calibration : MonoBehaviour {
 				float newS = s * s0;
 				Vector3 newT = s * t0 + t;
 				
-				depthCameraRig.localPosition = newT;
-				depthCameraRig.localScale = Vector3.one * newS;
+//				depthCameraRig.localPosition = newT;
+//				depthCameraRig.localScale = Vector3.one * newS;
+				depthCameraRig.localPosition = t;
+				depthCameraRig.localScale = Vector3.one * s;
 				targetPositions.Clear();
 				fingerTipPositions.Clear();
 			}
@@ -180,7 +185,7 @@ public class Calibration : MonoBehaviour {
 			if (measureFingerTip) {
 				measureFingerTip = false;
 				targetPositions.Add(target.position);
-				fingerTipPositions.Add(depthMesh.fingerTip.position);
+				fingerTipPositions.Add(depthMesh.fingerTip.localPosition);
 				RandomizeTarget ();
 			}
 		}
@@ -228,9 +233,8 @@ public class Calibration : MonoBehaviour {
 	}
 
 	private void ResetDepthCameraRig() {
-		
-		depthCameraRig.localPosition = new Vector3(0.0f, -0.02f, 0.05f);
+		depthCameraRig.localPosition = new Vector3(0.0f, 0.02f, 0.05f);
 		depthCameraRig.localRotation = Quaternion.Euler (0.0f, 0.0f, 10.0f);
-		depthCameraRig.localScale = Vector3.one * 0.9f;
+		depthCameraRig.localScale = Vector3.one * 1.1f;
 	}
 }
