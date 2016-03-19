@@ -16,6 +16,7 @@ public class Calibration : MonoBehaviour {
 	public StereoCamera stereoCamera;
 	public Transform target;
 	public Text text;
+	public Text lowerText;
 	public byte skinThreshold;
 	
 	private Texture2D colorMap;
@@ -37,32 +38,72 @@ public class Calibration : MonoBehaviour {
 		savedMeshFilters = new List<MeshFilter> ();
 		savedPointClouds = new List<PointCloud> ();
 		RandomizeTarget ();
+		ResetDepthCameraRig();
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKeyDown (KeyCode.A)) {
+		if (Input.GetKeyDown (KeyCode.F1)) {
+			bool textEnabled = !text.enabled;
+			text.enabled = textEnabled;
+			lowerText.enabled = textEnabled;
+		}
+		else if (Input.GetKeyDown (KeyCode.A)) {
 			print ("measureFingerTip");
 			measureFingerTip = true;
 		}
 		else if (Input.GetKeyDown (KeyCode.S)) {
-			float s;
-			Quaternion q;
-//			Quaternion q = Quaternion.identity;
-			Vector3 t;
-			Optimizer.Optimize (fingerTipPositions, targetPositions, out s, out q, out t);
-//			Optimizer.Optimize (fingerTipPositions, targetPositions, q, out s, out t);
+			if(targetPositions.Count >= 2)
+			{
+				float s;
+				Quaternion q;
+				Vector3 t;
+				Optimizer.Optimize (fingerTipPositions, targetPositions, out s, out q, out t);
+				
+				t = t * s;
+				
+				float s0 = depthCameraRig.localScale.x;
+				Quaternion q0 = depthCameraRig.localRotation;
+				Vector3 t0 = depthCameraRig.localPosition;
 
-			depthCameraRig.localPosition = t * s;
-			depthCameraRig.localRotation = q;
-			depthCameraRig.localScale = new Vector3 (s, s, s);
+				float newS = s * s0;
+				Quaternion newQ = q * q0;
+				Vector3 newT = s * (q * t0) + t;
+
+				depthCameraRig.localPosition = newT;
+				depthCameraRig.localRotation = newQ;
+				depthCameraRig.localScale = Vector3.one * newS;
+				targetPositions.Clear();
+				fingerTipPositions.Clear();
+			}
 		}
 		else if (Input.GetKeyDown (KeyCode.D)) {
-			depthCameraRig.localPosition = Vector3.zero;
-			depthCameraRig.localRotation = Quaternion.identity;
-			depthCameraRig.localScale = Vector3.one;
+			if(targetPositions.Count >= 3){
+				float s;
+				Vector3 t;
+				Optimizer.Optimize (fingerTipPositions, targetPositions, depthCameraRig.localRotation, out s, out t);
+				
+				t = t * s;
+				
+				float s0 = depthCameraRig.localScale.x;
+				Quaternion q0 = depthCameraRig.localRotation;
+				Vector3 t0 = depthCameraRig.localPosition;
+				
+				float newS = s * s0;
+				Vector3 newT = s * t0 + t;
+				
+				depthCameraRig.localPosition = newT;
+				depthCameraRig.localScale = Vector3.one * newS;
+				targetPositions.Clear();
+				fingerTipPositions.Clear();
+			}
 		}
 		else if (Input.GetKeyDown (KeyCode.F)) {
+			ResetDepthCameraRig();
+			targetPositions.Clear();
+			fingerTipPositions.Clear();
+		}
+		else if (Input.GetKeyDown (KeyCode.G)) {
 			bool active = !depthMesh.gameObject.activeSelf;
 			depthMesh.gameObject.SetActive (active);
 		}
@@ -104,30 +145,37 @@ public class Calibration : MonoBehaviour {
 			
 			MatOfFloat handMat = HandExtractor.GenerateHandMat (depthMat, handBlobMat, handBlob);
 			
-			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
+//			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
 
 			int fingerI;
 			int fingerJ;
 			FilterFloatMat (depthMat, out fingerI, out fingerJ);
 
-			Mat blobMat = BlobImage.ConvertDepthMat (depthMat);
+//			Mat blobMat = BlobImage.ConvertDepthMat (depthMat);
 
 			if (depthImage.enabled) {
 				depthImage.UpdateFloatMat (depthMat, fingerI, fingerJ);
 			}
 
-			if (skinImage.enabled) {
-				skinImage.SetSkinMat (skinMat);
-			}
+//			if (skinImage.enabled) {
+//				skinImage.SetSkinMat (skinMat);
+//			}
 
-			if (blobImage.enabled) {
-				blobImage.SetBlobMat (blobMat);
-			}
+//			if (blobImage.enabled) {
+//				blobImage.SetBlobMat (blobMat);
+//			}
 
 			depthMesh.SetFloatMat (handMat);
 			depthMesh.SetTexture (colorMap);
 
-			text.text = depthMesh.fingerTip.localPosition.z.ToString ();
+			Vector3 translation = depthCameraRig.localPosition;
+			Vector3 rotation = depthCameraRig.localRotation.eulerAngles;
+			Vector3 scale = depthCameraRig.localScale;
+
+			text.text = "Measured " + targetPositions.Count + " times"
+				+ string.Format("\nTranslation: {0}, {1}, {2}", translation.x, translation.y, translation.z)
+				+ string.Format("\nRotation: {0}, {1}, {2}", rotation.x, rotation.y, rotation.z)
+				+ string.Format("\nScale: {0}", scale.x);
 
 			if (measureFingerTip) {
 				measureFingerTip = false;
@@ -177,5 +225,12 @@ public class Calibration : MonoBehaviour {
 				break;
 			}
 		}
+	}
+
+	private void ResetDepthCameraRig() {
+		
+		depthCameraRig.localPosition = new Vector3(0.0f, -0.02f, 0.05f);
+		depthCameraRig.localRotation = Quaternion.Euler (0.0f, 0.0f, 10.0f);
+		depthCameraRig.localScale = Vector3.one * 0.9f;
 	}
 }
