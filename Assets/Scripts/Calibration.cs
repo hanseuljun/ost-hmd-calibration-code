@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using OpenCvSharp;
+using OpenCvSharp.Blob;
 
 public class Calibration : MonoBehaviour {
 	public IisuInputProvider IisuInput;
@@ -46,15 +47,11 @@ public class Calibration : MonoBehaviour {
 		}
 		else if (Input.GetKeyDown (KeyCode.S)) {
 			float s;
-//			Quaternion q;
-			Quaternion q = Quaternion.identity;
+			Quaternion q;
+//			Quaternion q = Quaternion.identity;
 			Vector3 t;
-//			Optimizer.Optimize (file.fingerTips, file.targets, out s, out q, out t);
-			Optimizer.Optimize (fingerTipPositions, targetPositions, q, out s, out t);
-			
-//			stereoCamera.ipd = stereoCamera.ipd * s;
-//			depthCameraRig.localPosition = t;
-//			depthCameraRig.localRotation = q;
+			Optimizer.Optimize (fingerTipPositions, targetPositions, out s, out q, out t);
+//			Optimizer.Optimize (fingerTipPositions, targetPositions, q, out s, out t);
 
 			depthCameraRig.localPosition = t * s;
 			depthCameraRig.localRotation = q;
@@ -68,14 +65,6 @@ public class Calibration : MonoBehaviour {
 		else if (Input.GetKeyDown (KeyCode.F)) {
 			bool active = !depthMesh.gameObject.activeSelf;
 			depthMesh.gameObject.SetActive (active);
-			Color background;
-			if(active) {
-				background = new Color(0.0f, 0.0f, 0.0f);
-			}
-			else {
-				background = new Color(0.5f, 0.5f, 1.0f);
-			}
-			stereoCamera.background = background;
 		}
 		//we update the depthmap 30fps
 		if (timer >= 0.0333f) {
@@ -96,8 +85,24 @@ public class Calibration : MonoBehaviour {
 			int depthWidth = IisuInput.DepthMapWidth;
 			int depthHeight = IisuInput.DepthMapHeight;
 
-			Mat depthMat = new Mat (depthHeight, depthWidth, MatType.CV_32F);
+			MatOfFloat depthMat = new MatOfFloat (depthHeight, depthWidth);
 			ImageConverter.GenerateDepthMat (IisuInput.DepthMap, ref depthMat);
+
+			MatOfByte validMat = HandExtractor.GenerateValidMat (depthMat, 0.02f, 1.0f);
+			CvBlobs validMatBlobs = new CvBlobs (validMat);
+			CvBlob handBlob = HandExtractor.ExtractHandBlob (depthMat, validMatBlobs);
+			
+			if (handBlob.Rect.Width > 200 && handBlob.Rect.Height > 100) {
+				return; // it is viewing the whole scene
+			}
+			
+			MatOfByte handBlobMat = HandExtractor.GenerateBlobMat (validMatBlobs, handBlob);
+			
+			MatOfByte closeMat = new MatOfByte(handBlobMat.Height, handBlobMat.Width);
+			Cv2.MorphologyEx (handBlobMat, closeMat, MorphTypes.Close, null, null, 1, BorderTypes.Constant, 0);
+			handBlobMat = closeMat;
+			
+			MatOfFloat handMat = HandExtractor.GenerateHandMat (depthMat, handBlobMat, handBlob);
 			
 			Mat skinMat = SkinImage.ConvertColorMat(colorMat, skinThreshold);
 
@@ -119,7 +124,7 @@ public class Calibration : MonoBehaviour {
 				blobImage.SetBlobMat (blobMat);
 			}
 
-			depthMesh.SetFloatMat (depthMat, skinMat, blobMat);
+			depthMesh.SetFloatMat (handMat);
 			depthMesh.SetTexture (colorMap);
 
 			text.text = depthMesh.fingerTip.localPosition.z.ToString ();

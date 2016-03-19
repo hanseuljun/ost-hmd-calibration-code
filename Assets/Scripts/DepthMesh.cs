@@ -40,47 +40,18 @@ public class DepthMesh : MonoBehaviour {
 		return savedFilter;
 	}
 
-	public void SetFloatMat(Mat depthMat, Mat blobMat) {
-		SetFloatMat (depthMat, null, blobMat);
-	}
+	public void SetFloatMat(Mat handMat) {
+		int depthWidth = handMat.Width;
+		int depthHeight = handMat.Height;
 
-	public void SetFloatMat(Mat depthMat, Mat skinMat, Mat blobMat) {
-		int depthWidth = depthMat.Width;
-		int depthHeight = depthMat.Height;
-
-		MatOfFloat matFloat = new MatOfFloat (depthMat);
+		MatOfFloat matFloat = new MatOfFloat (handMat);
 		var indexer = matFloat.GetIndexer ();
-		
-		MatOfByte3 matBlob = new MatOfByte3 (blobMat);
-		var blobIndexer = matBlob.GetIndexer ();
 
 		CameraParameters depthCamera = CameraParameters.CreateMetaDepth ();
 		CameraParameters colorCamera = CameraParameters.CreateMetaColor ();
 
 		if (depthWidth != depthCamera.Width || depthHeight != depthCamera.Height) {
 			Debug.LogError("Wrong Parameters!");
-		}
-		
-		if (depthWidth != blobMat.Width || depthHeight != blobMat.Height) {
-			Debug.LogError("Wrong Parameters!");
-		}
-		
-		int colorWidth = 0;
-		int colorHeight = 0;
-		
-		MatOfByte matSkin = null;
-		MatIndexer<byte> skinIndexer = null;
-		if (skinMat != null) {
-			colorWidth = skinMat.Width;
-			colorHeight = skinMat.Height;
-			matSkin = new MatOfByte (skinMat);
-			skinIndexer = matSkin.GetIndexer();
-
-			print ("skinIndexer[200, 200]: " + skinIndexer[200, 200]);
-			
-			if (colorWidth != colorCamera.Width || colorHeight != colorCamera.Height) {
-				Debug.LogError("Wrong Parameters!");
-			}
 		}
 
 		List<Vector3> vertices = new List<Vector3>();
@@ -91,7 +62,7 @@ public class DepthMesh : MonoBehaviour {
 				vertexMap[i + j * depthWidth] = -1;
 
 				float depth = indexer[j, i];
-				if(depth > 0.0f && blobIndexer[j, i].Item0 != 0 && vertices.Count < 65000) {
+				if(depth > 0.0f && !float.IsPositiveInfinity(depth) && vertices.Count < 65000) {
 					//Pixels ([0, depth width] x [0, depth height]) to Meters
 					Vector3 depthVertex = DepthPixelToVertex(i, depthHeight - 1 - j, depth, depthCamera);
 					
@@ -103,28 +74,6 @@ public class DepthMesh : MonoBehaviour {
 
 					//Meters to Pixels ([0, color width] x [0, color height])
 					ColorVertexToPixel(colorVertex, colorCamera, out u, out v);
-					
-					if(skinIndexer != null) {
-						int skinU = Mathf.FloorToInt(u);
-						int skinV = colorHeight - 1 - Mathf.FloorToInt(v);
-						if(skinU < 0) {
-							skinU = 0;
-						}
-						else if(skinU >= colorWidth) {
-							skinU = colorWidth - 1;
-						}
-
-						if(skinV < 0) {
-							skinV = 0;
-						}
-						else if(skinV >= colorHeight) {
-							skinV = colorHeight - 1;
-						}
-
-						if(skinIndexer[skinV, skinU] == 0) {
-							continue;
-						}
-					}
 
 					//Changing scale from pixels to [-1, 1]
 					u /= colorCamera.Width;

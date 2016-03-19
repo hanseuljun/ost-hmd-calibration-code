@@ -42,7 +42,7 @@ public class ImageConverter
 		return true;
 	}
 	
-	public static bool GenerateDepthMat(IImageData image, ref Mat mat) {
+	public static bool GenerateDepthMat(IImageData image, ref MatOfFloat mat) {
 		if (image == null)
 			return false;
 		
@@ -57,8 +57,7 @@ public class ImageConverter
 		// copy image content into a managed array
 		Marshal.Copy (image.Raw, imageRaw, 0, (int)image.ImageInfos.BytesRaw);
 
-		MatOfFloat matFloat = new MatOfFloat (mat);
-		var indexer = matFloat.GetIndexer ();
+		var indexer = mat.GetIndexer ();
 
 		int width = mat.Width;
 		int height = mat.Height;
