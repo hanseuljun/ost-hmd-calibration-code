@@ -1,9 +1,5 @@
 # OST-HMD Calibration Code
 
-This project was made for Meta 1, a device you won't be able to buy.
-
-So, do not try to use this project, just read its code.
-
 # How to Install
 
 ## 1. Go to http://softkinetic.com
@@ -20,9 +16,8 @@ So, do not try to use this project, just read its code.
 
 ## 6. Connect camera to a USB 2.0 Port (USB 3.0 is not available)
 
-
 # Dependencies
-
+- Meta 1
 - OpenCV Sharp 3.1
 - DepthSense SDK for 32 bit Windows
 - iisu 3.6
